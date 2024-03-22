@@ -50,6 +50,7 @@
 #include <test.h>
 #include <version.h>
 #include "autoconf.h"  // for pseudoconfig
+#include "kern/include/types.h"
 
 #include "opt-hello.h"
 
