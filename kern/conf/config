@@ -1067,4 +1067,4 @@ echo
 echo "Configuration in ../compile/$CONFNAME done"
 echo "Remember to make depend"
 
-echo $CONFNAME >> last-conf.name
+echo $CONFNAME > last-conf.name
