@@ -1066,3 +1066,5 @@ rm -f $CONFTMP $CONFTMP.attach
 echo
 echo "Configuration in ../compile/$CONFNAME done"
 echo "Remember to make depend"
+
+echo $CONFNAME >> last-conf.name
