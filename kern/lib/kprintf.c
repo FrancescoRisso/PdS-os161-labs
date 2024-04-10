@@ -27,18 +27,18 @@
  * SUCH DAMAGE.
  */
 
-#include <types.h>
-#include <kern/unistd.h>
-#include <stdarg.h>
-#include <lib.h>
-#include <spl.h>
+#include <__includeTypes.h>
 #include <cpu.h>
-#include <thread.h>
 #include <current.h>
-#include <synch.h>
+#include <kern/unistd.h>
+#include <lamebus/ltrace.h>  // for ltrace_stop()
+#include <lib.h>
 #include <mainbus.h>
-#include <vfs.h>          // for vfs_sync()
-#include <lamebus/ltrace.h> // for ltrace_stop()
+#include <spl.h>
+#include <stdarg.h>
+#include <synch.h>
+#include <thread.h>
+#include <vfs.h>  // for vfs_sync()
 
 
 /* Flags word for DEBUG() macro. */
@@ -61,53 +61,38 @@ static struct spinlock kprintf_spinlock;
  * Create the kprintf lock. Must be called before creating a second
  * thread or enabling a second CPU.
  */
-void
-kprintf_bootstrap(void)
-{
+void kprintf_bootstrap(void) {
 	KASSERT(kprintf_lock == NULL);
 
 	kprintf_lock = lock_create("kprintf_lock");
-	if (kprintf_lock == NULL) {
-		panic("Could not create kprintf_lock\n");
-	}
+	if(kprintf_lock == NULL) { panic("Could not create kprintf_lock\n"); }
 	spinlock_init(&kprintf_spinlock);
 }
 
 /*
  * Send characters to the console. Backend for __printf.
  */
-static
-void
-console_send(void *junk, const char *data, size_t len)
-{
+static void console_send(void *junk, const char *data, size_t len) {
 	size_t i;
 
-	(void)junk;
+	(void) junk;
 
-	for (i=0; i<len; i++) {
-		putch(data[i]);
-	}
+	for(i = 0; i < len; i++) { putch(data[i]); }
 }
 
 /*
  * Printf to the console.
  */
-int
-kprintf(const char *fmt, ...)
-{
+int kprintf(const char *fmt, ...) {
 	int chars;
 	va_list ap;
 	bool dolock;
 
-	dolock = kprintf_lock != NULL
-		&& curthread->t_in_interrupt == false
-		&& curthread->t_curspl == 0
-		&& curcpu->c_spinlocks == 0;
+	dolock = kprintf_lock != NULL && curthread->t_in_interrupt == false && curthread->t_curspl == 0 && curcpu->c_spinlocks == 0;
 
-	if (dolock) {
+	if(dolock) {
 		lock_acquire(kprintf_lock);
-	}
-	else {
+	} else {
 		spinlock_acquire(&kprintf_spinlock);
 	}
 
@@ -115,10 +100,9 @@ kprintf(const char *fmt, ...)
 	chars = __vprintf(console_send, NULL, fmt, ap);
 	va_end(ap);
 
-	if (dolock) {
+	if(dolock) {
 		lock_release(kprintf_lock);
-	}
-	else {
+	} else {
 		spinlock_release(&kprintf_spinlock);
 	}
 
@@ -130,9 +114,7 @@ kprintf(const char *fmt, ...)
  * passed and then halts the system.
  */
 
-void
-panic(const char *fmt, ...)
-{
+void panic(const char *fmt, ...) {
 	va_list ap;
 
 	/*
@@ -148,7 +130,7 @@ panic(const char *fmt, ...)
 	 */
 	static volatile int evil;
 
-	if (evil == 0) {
+	if(evil == 0) {
 		evil = 1;
 
 		/*
@@ -160,14 +142,14 @@ panic(const char *fmt, ...)
 		splhigh();
 	}
 
-	if (evil == 1) {
+	if(evil == 1) {
 		evil = 2;
 
 		/* Kill off other threads and halt other CPUs. */
 		thread_panic();
 	}
 
-	if (evil == 2) {
+	if(evil == 2) {
 		evil = 3;
 
 		/* Print the message. */
@@ -177,21 +159,21 @@ panic(const char *fmt, ...)
 		va_end(ap);
 	}
 
-	if (evil == 3) {
+	if(evil == 3) {
 		evil = 4;
 
 		/* Drop to the debugger. */
 		ltrace_stop(0);
 	}
 
-	if (evil == 4) {
+	if(evil == 4) {
 		evil = 5;
 
 		/* Try to sync the disks. */
 		vfs_sync();
 	}
 
-	if (evil == 5) {
+	if(evil == 5) {
 		evil = 6;
 
 		/* Shut down or reboot the system. */
@@ -202,15 +184,13 @@ panic(const char *fmt, ...)
 	 * Last resort, just in case.
 	 */
 
-	for (;;);
+	for(;;)
+		;
 }
 
 /*
  * Assertion failures go through this.
  */
-void
-badassert(const char *expr, const char *file, int line, const char *func)
-{
-	panic("Assertion failed: %s, at %s:%d (%s)\n",
-	      expr, file, line, func);
+void badassert(const char *expr, const char *file, int line, const char *func) {
+	panic("Assertion failed: %s, at %s:%d (%s)\n", expr, file, line, func);
 }

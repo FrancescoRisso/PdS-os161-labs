@@ -28,14 +28,14 @@
  */
 
 /* Make sure to build out-of-line versions of spl inline functions */
-#define SPL_INLINE	/* empty */
+#define SPL_INLINE /* empty */
 
-#include <types.h>
-#include <lib.h>
+#include <__includeTypes.h>
 #include <cpu.h>
+#include <current.h>
+#include <lib.h>
 #include <spl.h>
 #include <thread.h>
-#include <current.h>
 
 /*
  * Machine-independent interrupt handling functions.
@@ -83,44 +83,36 @@
  *
  * curthread->t_iplhigh_count is used to track this.
  */
-void
-splraise(int oldspl, int newspl)
-{
+void splraise(int oldspl, int newspl) {
 	struct thread *cur = curthread;
 
 	/* only one priority level, only one valid args configuration */
 	KASSERT(oldspl == IPL_NONE);
 	KASSERT(newspl == IPL_HIGH);
 
-	if (!CURCPU_EXISTS()) {
+	if(!CURCPU_EXISTS()) {
 		/* before curcpu initialization; interrupts are off anyway */
 		return;
 	}
 
-	if (cur->t_iplhigh_count == 0) {
-		cpu_irqoff();
-	}
+	if(cur->t_iplhigh_count == 0) { cpu_irqoff(); }
 	cur->t_iplhigh_count++;
 }
 
-void
-spllower(int oldspl, int newspl)
-{
+void spllower(int oldspl, int newspl) {
 	struct thread *cur = curthread;
 
 	/* only one priority level, only one valid args configuration */
 	KASSERT(oldspl == IPL_HIGH);
 	KASSERT(newspl == IPL_NONE);
 
-	if (!CURCPU_EXISTS()) {
+	if(!CURCPU_EXISTS()) {
 		/* before curcpu initialization; interrupts are off anyway */
 		return;
 	}
 
 	cur->t_iplhigh_count--;
-	if (cur->t_iplhigh_count == 0) {
-		cpu_irqon();
-	}
+	if(cur->t_iplhigh_count == 0) { cpu_irqon(); }
 }
 
 
@@ -128,30 +120,26 @@ spllower(int oldspl, int newspl)
  * Disable or enable interrupts and adjust curspl setting. Return old
  * spl level.
  */
-int
-splx(int spl)
-{
+int splx(int spl) {
 	struct thread *cur = curthread;
 	int ret;
 
-	if (!CURCPU_EXISTS()) {
+	if(!CURCPU_EXISTS()) {
 		/* before curcpu initialization; interrupts are off anyway */
 		return spl;
 	}
 
-	if (cur->t_curspl < spl) {
+	if(cur->t_curspl < spl) {
 		/* turning interrupts off */
 		splraise(cur->t_curspl, spl);
 		ret = cur->t_curspl;
 		cur->t_curspl = spl;
-	}
-	else if (cur->t_curspl > spl) {
+	} else if(cur->t_curspl > spl) {
 		/* turning interrupts on */
 		ret = cur->t_curspl;
 		cur->t_curspl = spl;
 		spllower(ret, spl);
-	}
-	else {
+	} else {
 		/* do nothing */
 		ret = spl;
 	}

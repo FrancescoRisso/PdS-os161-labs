@@ -28,13 +28,14 @@
  * SUCH DAMAGE.
  */
 
+#include "main.h"
+
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 
 #include "workloads.h"
-#include "main.h"
 
 struct workload {
 	const char *name;
@@ -45,8 +46,10 @@ struct workload {
 	} run;
 };
 
-#define WL(n)    { .name = #n, .argname = NULL, .run.noarg = wl_##n }
-#define WLA(n,a) { .name = #n, .argname = #a,   .run.witharg = wl_##n }
+#define WL(n) \
+	{ .name = #n, .argname = NULL, .run.noarg = wl_##n }
+#define WLA(n, a) \
+	{ .name = #n, .argname = #a, .run.witharg = wl_##n }
 
 static const struct workload workloads[] = {
 	WLA(createwrite, size),
@@ -112,83 +115,63 @@ static const unsigned numworkloads = sizeof(workloads) / sizeof(workloads[0]);
 #undef WL
 #undef WLA
 
-static
-const struct workload *
-findworkload(const char *name)
-{
+static const struct workload *findworkload(const char *name) {
 	unsigned i;
 
-	for (i=0; i<numworkloads; i++) {
-		if (!strcmp(workloads[i].name, name)) {
-			return &workloads[i];
-		}
+	for(i = 0; i < numworkloads; i++) {
+		if(!strcmp(workloads[i].name, name)) { return &workloads[i]; }
 	}
 	return NULL;
 }
 
-static
-void
-printworkloads(void)
-{
+static void printworkloads(void) {
 	unsigned i;
 
 	printf("Supported workloads:\n");
-	for (i=0; i<numworkloads; i++) {
+	for(i = 0; i < numworkloads; i++) {
 		printf("   %s", workloads[i].name);
-		if (workloads[i].argname) {
-			printf(" %s", workloads[i].argname);
-		}
+		if(workloads[i].argname) { printf(" %s", workloads[i].argname); }
 		printf("\n");
 	}
 }
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	const char *workloadname;
 	const struct workload *workload;
 	int checkmode = 0;
 
-	if (argc == 2 && !strcmp(argv[1], "list")) {
+	if(argc == 2 && !strcmp(argv[1], "list")) {
 		printworkloads();
 		exit(0);
 	}
 
-	if (argc < 3) {
+	if(argc < 3) {
 		warnx("Usage: %s do|check workload [arg]", argv[0]);
 		warnx("Use \"list\" for a list of workloads");
 		exit(1);
 	}
 
-	if (!strcmp(argv[1], "do")) {
+	if(!strcmp(argv[1], "do")) {
 		checkmode = 0;
-	}
-	else if (!strcmp(argv[1], "check")) {
+	} else if(!strcmp(argv[1], "check")) {
 		checkmode = 1;
-	}
-	else {
+	} else {
 		errx(1, "Action must be \"do\" or \"check\"");
 	}
 
 	workloadname = argv[2];
 	workload = findworkload(workloadname);
-	if (workload == NULL) {
+	if(workload == NULL) {
 		errx(1, "Unknown workload %s\n", workloadname);
 		printworkloads();
 		exit(1);
 	}
 	setcheckmode(checkmode);
-	if (workload->argname) {
-		if (argc != 4) {
-			errx(1, "%s requires argument %s\n",
-			     workloadname, workload->argname);
-		}
+	if(workload->argname) {
+		if(argc != 4) { errx(1, "%s requires argument %s\n", workloadname, workload->argname); }
 		workload->run.witharg(argv[3]);
-	}
-	else {
-		if (argc != 3) {
-			errx(1, "Stray argument for workload %s",workloadname);
-		}
+	} else {
+		if(argc != 3) { errx(1, "Stray argument for workload %s", workloadname); }
 		workload->run.noarg();
 	}
 	complete();

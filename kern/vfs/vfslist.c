@@ -34,15 +34,15 @@
 
 #define VFSINLINE
 
-#include <types.h>
+#include <__includeTypes.h>
+#include <array.h>
+#include <device.h>
+#include <fs.h>
 #include <kern/errno.h>
 #include <lib.h>
-#include <array.h>
 #include <synch.h>
 #include <vfs.h>
-#include <fs.h>
 #include <vnode.h>
-#include <device.h>
 
 /*
  * Structure for a single named device.
@@ -83,7 +83,7 @@ struct knowndev {
 };
 
 /* A placeholder for kd_fs for devices used as swap */
-#define SWAP_FS	((struct fs *)-1)
+#define SWAP_FS ((struct fs *) -1)
 
 DECLARRAY(knowndev, static __UNUSED inline);
 DEFARRAY(knowndev, static __UNUSED inline);
@@ -98,18 +98,12 @@ static unsigned vfs_biglock_depth;
 /*
  * Setup function
  */
-void
-vfs_bootstrap(void)
-{
+void vfs_bootstrap(void) {
 	knowndevs = knowndevarray_create();
-	if (knowndevs==NULL) {
-		panic("vfs: Could not create knowndevs array\n");
-	}
+	if(knowndevs == NULL) { panic("vfs: Could not create knowndevs array\n"); }
 
 	vfs_biglock = lock_create("vfs_biglock");
-	if (vfs_biglock==NULL) {
-		panic("vfs: Could not create vfs big lock\n");
-	}
+	if(vfs_biglock == NULL) { panic("vfs: Could not create vfs big lock\n"); }
 	vfs_biglock_depth = 0;
 
 	devnull_create();
@@ -123,13 +117,10 @@ vfs_bootstrap(void)
  * much material. Your solution scheme for FS and VFS locking should
  * not require recursive locks.
  */
-void
-vfs_biglock_acquire(void)
-{
-	if (!lock_do_i_hold(vfs_biglock)) {
+void vfs_biglock_acquire(void) {
+	if(!lock_do_i_hold(vfs_biglock)) {
 		lock_acquire(vfs_biglock);
-	}
-	else if (vfs_biglock_depth == 0) {
+	} else if(vfs_biglock_depth == 0) {
 		/*
 		 * Supposedly we hold it, but the depth is 0. This may
 		 * mean: (1) the count is messed up, or (2)
@@ -149,39 +140,31 @@ vfs_biglock_acquire(void)
 	vfs_biglock_depth++;
 }
 
-void
-vfs_biglock_release(void)
-{
+void vfs_biglock_release(void) {
 	KASSERT(lock_do_i_hold(vfs_biglock));
 	KASSERT(vfs_biglock_depth > 0);
 	vfs_biglock_depth--;
-	if (vfs_biglock_depth == 0) {
-		lock_release(vfs_biglock);
-	}
+	if(vfs_biglock_depth == 0) { lock_release(vfs_biglock); }
 }
 
-bool
-vfs_biglock_do_i_hold(void)
-{
+bool vfs_biglock_do_i_hold(void) {
 	return lock_do_i_hold(vfs_biglock);
 }
 
 /*
  * Global sync function - call FSOP_SYNC on all devices.
  */
-int
-vfs_sync(void)
-{
+int vfs_sync(void) {
 	struct knowndev *dev;
 	unsigned i, num;
 
 	vfs_biglock_acquire();
 
 	num = knowndevarray_num(knowndevs);
-	for (i=0; i<num; i++) {
+	for(i = 0; i < num; i++) {
 		dev = knowndevarray_get(knowndevs, i);
-		if (dev->kd_fs != NULL && dev->kd_fs != SWAP_FS) {
-			/*result =*/ FSOP_SYNC(dev->kd_fs);
+		if(dev->kd_fs != NULL && dev->kd_fs != SWAP_FS) { /*result =*/
+			FSOP_SYNC(dev->kd_fs);
 		}
 	}
 
@@ -194,16 +177,14 @@ vfs_sync(void)
  * Given a device name (lhd0, emu0, somevolname, null, etc.), hand
  * back an appropriate vnode.
  */
-int
-vfs_getroot(const char *devname, struct vnode **ret)
-{
+int vfs_getroot(const char *devname, struct vnode **ret) {
 	struct knowndev *kd;
 	unsigned i, num;
 
 	KASSERT(vfs_biglock_do_i_hold());
 
 	num = knowndevarray_num(knowndevs);
-	for (i=0; i<num; i++) {
+	for(i = 0; i < num; i++) {
 		kd = knowndevarray_get(knowndevs, i);
 
 		/*
@@ -215,20 +196,13 @@ vfs_getroot(const char *devname, struct vnode **ret)
 		 * and DEVNAME names the device, return ENXIO.
 		 */
 
-		if (kd->kd_fs != NULL && kd->kd_fs != SWAP_FS) {
+		if(kd->kd_fs != NULL && kd->kd_fs != SWAP_FS) {
 			const char *volname;
 			volname = FSOP_GETVOLNAME(kd->kd_fs);
 
-			if (!strcmp(kd->kd_name, devname) ||
-			    (volname!=NULL && !strcmp(volname, devname))) {
-				return FSOP_GETROOT(kd->kd_fs, ret);
-			}
-		}
-		else {
-			if (kd->kd_rawname!=NULL &&
-			    !strcmp(kd->kd_name, devname)) {
-				return ENXIO;
-			}
+			if(!strcmp(kd->kd_name, devname) || (volname != NULL && !strcmp(volname, devname))) { return FSOP_GETROOT(kd->kd_fs, ret); }
+		} else {
+			if(kd->kd_rawname != NULL && !strcmp(kd->kd_name, devname)) { return ENXIO; }
 		}
 
 		/*
@@ -236,9 +210,9 @@ vfs_getroot(const char *devname, struct vnode **ret)
 		 * must have no fs and not be mountable. In this case,
 		 * we return the device itself.
 		 */
-		if (!strcmp(kd->kd_name, devname)) {
-			KASSERT(kd->kd_fs==NULL);
-			KASSERT(kd->kd_rawname==NULL);
+		if(!strcmp(kd->kd_name, devname)) {
+			KASSERT(kd->kd_fs == NULL);
+			KASSERT(kd->kd_rawname == NULL);
 			KASSERT(kd->kd_device != NULL);
 			VOP_INCREF(kd->kd_vnode);
 			*ret = kd->kd_vnode;
@@ -249,7 +223,7 @@ vfs_getroot(const char *devname, struct vnode **ret)
 		 * If the device has a rawname and DEVNAME names that,
 		 * return the device itself.
 		 */
-		if (kd->kd_rawname!=NULL && !strcmp(kd->kd_rawname, devname)) {
+		if(kd->kd_rawname != NULL && !strcmp(kd->kd_rawname, devname)) {
 			KASSERT(kd->kd_device != NULL);
 			VOP_INCREF(kd->kd_vnode);
 			*ret = kd->kd_vnode;
@@ -273,9 +247,7 @@ vfs_getroot(const char *devname, struct vnode **ret)
 /*
  * Given a filesystem, hand back the name of the device it's mounted on.
  */
-const char *
-vfs_getdevname(struct fs *fs)
-{
+const char *vfs_getdevname(struct fs *fs) {
 	struct knowndev *kd;
 	unsigned i, num;
 
@@ -284,10 +256,10 @@ vfs_getdevname(struct fs *fs)
 	KASSERT(vfs_biglock_do_i_hold());
 
 	num = knowndevarray_num(knowndevs);
-	for (i=0; i<num; i++) {
+	for(i = 0; i < num; i++) {
 		kd = knowndevarray_get(knowndevs, i);
 
-		if (kd->kd_fs == fs) {
+		if(kd->kd_fs == fs) {
 			/*
 			 * This is not a race condition: as long as the
 			 * guy calling us holds a reference to the fs,
@@ -304,14 +276,9 @@ vfs_getdevname(struct fs *fs)
 /*
  * Assemble the name for a raw device from the name for the regular device.
  */
-static
-char *
-mkrawname(const char *name)
-{
-	char *s = kmalloc(strlen(name)+3+1);
-	if (!s) {
-		return NULL;
-	}
+static char *mkrawname(const char *name) {
+	char *s = kmalloc(strlen(name) + 3 + 1);
+	if(!s) { return NULL; }
 	strcpy(s, name);
 	strcat(s, "raw");
 	return s;
@@ -322,14 +289,8 @@ mkrawname(const char *name)
  * Check if the two strings passed in are the same, if they're both
  * not NULL (the latter part being significant).
  */
-static
-inline
-int
-samestring(const char *a, const char *b)
-{
-	if (a==NULL || b==NULL) {
-		return 0;
-	}
+static inline int samestring(const char *a, const char *b) {
+	if(a == NULL || b == NULL) { return 0; }
 	return !strcmp(a, b);
 }
 
@@ -337,12 +298,8 @@ samestring(const char *a, const char *b)
  * Check if the first string passed is the same as any of the three others,
  * if they're not NULL.
  */
-static
-inline
-int
-samestring3(const char *a, const char *b, const char *c, const char *d)
-{
-	return samestring(a,b) || samestring(a,c) || samestring(a,d);
+static inline int samestring3(const char *a, const char *b, const char *c, const char *d) {
+	return samestring(a, b) || samestring(a, c) || samestring(a, d);
 }
 
 /*
@@ -350,10 +307,7 @@ samestring3(const char *a, const char *b, const char *c, const char *d)
  * name.
  */
 
-static
-int
-badnames(const char *n1, const char *n2, const char *n3)
-{
+static int badnames(const char *n1, const char *n2, const char *n3) {
 	const char *volname;
 	unsigned i, num;
 	struct knowndev *kd;
@@ -361,20 +315,15 @@ badnames(const char *n1, const char *n2, const char *n3)
 	KASSERT(vfs_biglock_do_i_hold());
 
 	num = knowndevarray_num(knowndevs);
-	for (i=0; i<num; i++) {
+	for(i = 0; i < num; i++) {
 		kd = knowndevarray_get(knowndevs, i);
 
-		if (kd->kd_fs != NULL && kd->kd_fs != SWAP_FS) {
+		if(kd->kd_fs != NULL && kd->kd_fs != SWAP_FS) {
 			volname = FSOP_GETVOLNAME(kd->kd_fs);
-			if (samestring3(volname, n1, n2, n3)) {
-				return 1;
-			}
+			if(samestring3(volname, n1, n2, n3)) { return 1; }
 		}
 
-		if (samestring3(kd->kd_rawname, n1, n2, n3) ||
-		    samestring3(kd->kd_name, n1, n2, n3)) {
-			return 1;
-		}
+		if(samestring3(kd->kd_rawname, n1, n2, n3) || samestring3(kd->kd_name, n1, n2, n3)) { return 1; }
 	}
 
 	return 0;
@@ -387,14 +336,11 @@ badnames(const char *n1, const char *n2, const char *n3)
  * to have a filesystem mounted on it, and a raw device will be created
  * for direct access.
  */
-static
-int
-vfs_doadd(const char *dname, int mountable, struct device *dev, struct fs *fs)
-{
-	char *name=NULL, *rawname=NULL;
-	struct knowndev *kd=NULL;
-	struct vnode *vnode=NULL;
-	const char *volname=NULL;
+static int vfs_doadd(const char *dname, int mountable, struct device *dev, struct fs *fs) {
+	char *name = NULL, *rawname = NULL;
+	struct knowndev *kd = NULL;
+	struct vnode *vnode = NULL;
+	const char *volname = NULL;
 	unsigned index;
 	int result;
 
@@ -404,26 +350,26 @@ vfs_doadd(const char *dname, int mountable, struct device *dev, struct fs *fs)
 	vfs_biglock_acquire();
 
 	name = kstrdup(dname);
-	if (name==NULL) {
+	if(name == NULL) {
 		result = ENOMEM;
 		goto fail;
 	}
-	if (mountable) {
+	if(mountable) {
 		rawname = mkrawname(name);
-		if (rawname==NULL) {
+		if(rawname == NULL) {
 			result = ENOMEM;
 			goto fail;
 		}
 	}
 
 	vnode = dev_create_vnode(dev);
-	if (vnode==NULL) {
+	if(vnode == NULL) {
 		result = ENOMEM;
 		goto fail;
 	}
 
 	kd = kmalloc(sizeof(struct knowndev));
-	if (kd==NULL) {
+	if(kd == NULL) {
 		result = ENOMEM;
 		goto fail;
 	}
@@ -434,41 +380,29 @@ vfs_doadd(const char *dname, int mountable, struct device *dev, struct fs *fs)
 	kd->kd_vnode = vnode;
 	kd->kd_fs = fs;
 
-	if (fs!=NULL) {
-		volname = FSOP_GETVOLNAME(fs);
-	}
+	if(fs != NULL) { volname = FSOP_GETVOLNAME(fs); }
 
-	if (badnames(name, rawname, volname)) {
+	if(badnames(name, rawname, volname)) {
 		result = EEXIST;
 		goto fail;
 	}
 
 	result = knowndevarray_add(knowndevs, kd, &index);
-	if (result) {
-		goto fail;
-	}
+	if(result) { goto fail; }
 
-	if (dev != NULL) {
+	if(dev != NULL) {
 		/* use index+1 as the device number, so 0 is reserved */
-		dev->d_devnumber = index+1;
+		dev->d_devnumber = index + 1;
 	}
 
 	vfs_biglock_release();
 	return 0;
 
- fail:
-	if (name) {
-		kfree(name);
-	}
-	if (rawname) {
-		kfree(rawname);
-	}
-	if (vnode) {
-		dev_uncreate_vnode(vnode);
-	}
-	if (kd) {
-		kfree(kd);
-	}
+fail:
+	if(name) { kfree(name); }
+	if(rawname) { kfree(rawname); }
+	if(vnode) { dev_uncreate_vnode(vnode); }
+	if(kd) { kfree(kd); }
 
 	vfs_biglock_release();
 	return result;
@@ -478,9 +412,7 @@ vfs_doadd(const char *dname, int mountable, struct device *dev, struct fs *fs)
  * Add a new device, by name. See above for the description of
  * mountable.
  */
-int
-vfs_adddev(const char *devname, struct device *dev, int mountable)
-{
+int vfs_adddev(const char *devname, struct device *dev, int mountable) {
 	return vfs_doadd(devname, mountable, dev, NULL);
 }
 
@@ -489,9 +421,7 @@ vfs_adddev(const char *devname, struct device *dev, int mountable)
  * This is used for emufs, but might also be used for network
  * filesystems and the like.
  */
-int
-vfs_addfs(const char *devname, struct fs *fs)
-{
+int vfs_addfs(const char *devname, struct fs *fs) {
 	return vfs_doadd(devname, 0, NULL, fs);
 }
 
@@ -501,10 +431,7 @@ vfs_addfs(const char *devname, struct fs *fs)
  * Look for a mountable device named DEVNAME.
  * Should already hold knowndevs_lock.
  */
-static
-int
-findmount(const char *devname, struct knowndev **result)
-{
+static int findmount(const char *devname, struct knowndev **result) {
 	struct knowndev *dev;
 	unsigned i, num;
 	bool found = false;
@@ -512,14 +439,14 @@ findmount(const char *devname, struct knowndev **result)
 	KASSERT(vfs_biglock_do_i_hold());
 
 	num = knowndevarray_num(knowndevs);
-	for (i=0; !found && i<num; i++) {
+	for(i = 0; !found && i < num; i++) {
 		dev = knowndevarray_get(knowndevs, i);
-		if (dev->kd_rawname==NULL) {
+		if(dev->kd_rawname == NULL) {
 			/* not mountable/unmountable */
 			continue;
 		}
 
-		if (!strcmp(devname, dev->kd_name)) {
+		if(!strcmp(devname, dev->kd_name)) {
 			*result = dev;
 			found = true;
 		}
@@ -534,10 +461,7 @@ findmount(const char *devname, struct knowndev **result)
  *
  * The DATA argument is passed through unchanged to MOUNTFUNC.
  */
-int
-vfs_mount(const char *devname, void *data,
-	  int (*mountfunc)(void *data, struct device *, struct fs **ret))
-{
+int vfs_mount(const char *devname, void *data, int (*mountfunc)(void *data, struct device *, struct fs **ret)) {
 	const char *volname;
 	struct knowndev *kd;
 	struct fs *fs;
@@ -546,12 +470,12 @@ vfs_mount(const char *devname, void *data,
 	vfs_biglock_acquire();
 
 	result = findmount(devname, &kd);
-	if (result) {
+	if(result) {
 		vfs_biglock_release();
 		return result;
 	}
 
-	if (kd->kd_fs != NULL) {
+	if(kd->kd_fs != NULL) {
 		vfs_biglock_release();
 		return EBUSY;
 	}
@@ -559,19 +483,18 @@ vfs_mount(const char *devname, void *data,
 	KASSERT(kd->kd_device != NULL);
 
 	result = mountfunc(data, kd->kd_device, &fs);
-	if (result) {
+	if(result) {
 		vfs_biglock_release();
 		return result;
 	}
 
 	KASSERT(fs != NULL);
-	KASSERT(fs != SWAP_FS); 
+	KASSERT(fs != SWAP_FS);
 
 	kd->kd_fs = fs;
 
 	volname = FSOP_GETVOLNAME(fs);
-	kprintf("vfs: Mounted %s: on %s\n",
-		volname ? volname : kd->kd_name, kd->kd_name);
+	kprintf("vfs: Mounted %s: on %s\n", volname ? volname : kd->kd_name, kd->kd_name);
 
 	vfs_biglock_release();
 	return 0;
@@ -582,21 +505,17 @@ vfs_mount(const char *devname, void *data,
  * vnode. Unlike mount tolerates a trailing colon on the device name,
  * to avoid student-facing confusion.
  */
-int
-vfs_swapon(const char *devname, struct vnode **ret)
-{
+int vfs_swapon(const char *devname, struct vnode **ret) {
 	char *myname = NULL;
 	size_t len;
 	struct knowndev *kd;
 	int result;
 
 	len = strlen(devname);
-	if (len > 0 && devname[len - 1] == ':') {
+	if(len > 0 && devname[len - 1] == ':') {
 		/* tolerate trailing :, e.g. lhd0: rather than lhd0 */
 		myname = kstrdup(devname);
-		if (myname == NULL) {
-			return ENOMEM;
-		}
+		if(myname == NULL) { return ENOMEM; }
 		myname[len - 1] = 0;
 		devname = myname;
 	}
@@ -604,11 +523,9 @@ vfs_swapon(const char *devname, struct vnode **ret)
 	vfs_biglock_acquire();
 
 	result = findmount(devname, &kd);
-	if (result) {
-		goto out;
-	}
+	if(result) { goto out; }
 
-	if (kd->kd_fs != NULL) {
+	if(kd->kd_fs != NULL) {
 		result = EBUSY;
 		goto out;
 	}
@@ -621,11 +538,9 @@ vfs_swapon(const char *devname, struct vnode **ret)
 	VOP_INCREF(kd->kd_vnode);
 	*ret = kd->kd_vnode;
 
- out:
+out:
 	vfs_biglock_release();
-	if (myname != NULL) {
-		kfree(myname);
-	}
+	if(myname != NULL) { kfree(myname); }
 
 	return result;
 }
@@ -634,20 +549,16 @@ vfs_swapon(const char *devname, struct vnode **ret)
  * Unmount a filesystem/device by name.
  * First calls FSOP_SYNC on the filesystem; then calls FSOP_UNMOUNT.
  */
-int
-vfs_unmount(const char *devname)
-{
+int vfs_unmount(const char *devname) {
 	struct knowndev *kd;
 	int result;
 
 	vfs_biglock_acquire();
 
 	result = findmount(devname, &kd);
-	if (result) {
-		goto fail;
-	}
+	if(result) { goto fail; }
 
-	if (kd->kd_fs == NULL || kd->kd_fs == SWAP_FS) {
+	if(kd->kd_fs == NULL || kd->kd_fs == SWAP_FS) {
 		result = EINVAL;
 		goto fail;
 	}
@@ -656,23 +567,19 @@ vfs_unmount(const char *devname)
 
 	/* sync the fs */
 	result = FSOP_SYNC(kd->kd_fs);
-	if (result) {
-		goto fail;
-	}
+	if(result) { goto fail; }
 
 	result = FSOP_UNMOUNT(kd->kd_fs);
-	if (result) {
-		goto fail;
-	}
+	if(result) { goto fail; }
 
 	kprintf("vfs: Unmounted %s:\n", kd->kd_name);
 
 	/* now drop the filesystem */
 	kd->kd_fs = NULL;
 
-	KASSERT(result==0);
+	KASSERT(result == 0);
 
- fail:
+fail:
 	vfs_biglock_release();
 	return result;
 }
@@ -684,20 +591,16 @@ vfs_unmount(const char *devname)
  * explicitly prior to shutting down, except perhaps when swapping to
  * things that themselves want a clean shutdown, like RAIDs.)
  */
-int
-vfs_swapoff(const char *devname)
-{
+int vfs_swapoff(const char *devname) {
 	struct knowndev *kd;
 	int result;
 
 	vfs_biglock_acquire();
 
 	result = findmount(devname, &kd);
-	if (result) {
-		goto fail;
-	}
+	if(result) { goto fail; }
 
-	if (kd->kd_fs != SWAP_FS) {
+	if(kd->kd_fs != SWAP_FS) {
 		result = EINVAL;
 		goto fail;
 	}
@@ -707,9 +610,9 @@ vfs_swapoff(const char *devname)
 	/* drop it */
 	kd->kd_fs = NULL;
 
-	KASSERT(result==0);
+	KASSERT(result == 0);
 
- fail:
+fail:
 	vfs_biglock_release();
 	return result;
 }
@@ -717,9 +620,7 @@ vfs_swapoff(const char *devname)
 /*
  * Global unmount function.
  */
-int
-vfs_unmountall(void)
-{
+int vfs_unmountall(void) {
 	struct knowndev *dev;
 	unsigned i, num;
 	int result;
@@ -727,17 +628,17 @@ vfs_unmountall(void)
 	vfs_biglock_acquire();
 
 	num = knowndevarray_num(knowndevs);
-	for (i=0; i<num; i++) {
+	for(i = 0; i < num; i++) {
 		dev = knowndevarray_get(knowndevs, i);
-		if (dev->kd_rawname == NULL) {
+		if(dev->kd_rawname == NULL) {
 			/* not mountable/unmountable */
 			continue;
 		}
-		if (dev->kd_fs == NULL) {
+		if(dev->kd_fs == NULL) {
 			/* not mounted */
 			continue;
 		}
-		if (dev->kd_fs == SWAP_FS) {
+		if(dev->kd_fs == SWAP_FS) {
 			/* just drop it */
 			dev->kd_fs = NULL;
 			continue;
@@ -746,13 +647,16 @@ vfs_unmountall(void)
 		kprintf("vfs: Unmounting %s:\n", dev->kd_name);
 
 		result = FSOP_SYNC(dev->kd_fs);
-		if (result) {
-			kprintf("vfs: Warning: sync failed for %s: %s, trying "
-				"again\n", dev->kd_name, strerror(result));
+		if(result) {
+			kprintf(
+				"vfs: Warning: sync failed for %s: %s, trying "
+				"again\n",
+				dev->kd_name, strerror(result));
 
 			result = FSOP_SYNC(dev->kd_fs);
-			if (result) {
-				kprintf("vfs: Warning: sync failed second time"
+			if(result) {
+				kprintf(
+					"vfs: Warning: sync failed second time"
 					" for %s: %s, giving up...\n",
 					dev->kd_name, strerror(result));
 				/*
@@ -764,13 +668,13 @@ vfs_unmountall(void)
 		}
 
 		result = FSOP_UNMOUNT(dev->kd_fs);
-		if (result == EBUSY) {
-			kprintf("vfs: Cannot unmount %s: (busy)\n",
-				dev->kd_name);
+		if(result == EBUSY) {
+			kprintf("vfs: Cannot unmount %s: (busy)\n", dev->kd_name);
 			continue;
 		}
-		if (result) {
-			kprintf("vfs: Warning: unmount failed for %s:"
+		if(result) {
+			kprintf(
+				"vfs: Warning: unmount failed for %s:"
 				" %s, already synced, dropping...\n",
 				dev->kd_name, strerror(result));
 			continue;

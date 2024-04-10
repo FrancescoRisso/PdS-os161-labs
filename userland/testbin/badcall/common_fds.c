@@ -31,15 +31,15 @@
  * Calls with invalid fds
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include <limits.h>
-#include <errno.h>
-#include <err.h>
 
 #include "config.h"
 #include "test.h"
@@ -51,112 +51,69 @@ enum rwtestmodes {
 	RW_TEST_WRONLY,
 };
 
-static
-int
-read_badfd(int fd)
-{
+static int read_badfd(int fd) {
 	char buf[128];
 	return read(fd, buf, sizeof(buf));
 }
 
-static
-int
-write_badfd(int fd)
-{
+static int write_badfd(int fd) {
 	char buf[128];
 	memset(buf, 'a', sizeof(buf));
 	return write(fd, buf, sizeof(buf));
 }
 
 
-static
-int
-close_badfd(int fd)
-{
+static int close_badfd(int fd) {
 	return close(fd);
 }
 
-static
-int
-ioctl_badfd(int fd)
-{
+static int ioctl_badfd(int fd) {
 	return ioctl(fd, 0, NULL);
 }
 
-static
-int
-lseek_badfd(int fd)
-{
+static int lseek_badfd(int fd) {
 	return lseek(fd, 0, SEEK_SET);
 }
 
-static
-int
-fsync_badfd(int fd)
-{
+static int fsync_badfd(int fd) {
 	return fsync(fd);
 }
 
-static
-int
-ftruncate_badfd(int fd)
-{
+static int ftruncate_badfd(int fd) {
 	return ftruncate(fd, 60);
 }
 
-static
-int
-fstat_badfd(int fd)
-{
+static int fstat_badfd(int fd) {
 	struct stat sb;
 	return fstat(fd, &sb);
 }
 
-static
-int
-getdirentry_badfd(int fd)
-{
+static int getdirentry_badfd(int fd) {
 	char buf[32];
 	return getdirentry(fd, buf, sizeof(buf));
 }
 
-static
-int
-dup2_badfd(int fd)
-{
+static int dup2_badfd(int fd) {
 	/* use the +1 to avoid doing dup2(CLOSED_FD, CLOSED_FD) */
-	return dup2(fd, CLOSED_FD+1);
+	return dup2(fd, CLOSED_FD + 1);
 }
 
-static
-void
-dup2_cleanup(void)
-{
-	close(CLOSED_FD+1);
+static void dup2_cleanup(void) {
+	close(CLOSED_FD + 1);
 }
 
 ////////////////////////////////////////////////////////////
 
-static
-void
-any_badfd(int (*func)(int fd), void (*cleanup)(void), const char *callname,
-	  int fd, const char *fddesc)
-{
+static void any_badfd(int (*func)(int fd), void (*cleanup)(void), const char *callname, int fd, const char *fddesc) {
 	int rv;
 
 	report_begin("%s using %s", callname, fddesc);
 	rv = func(fd);
 	report_check(rv, errno, EBADF);
-	if (cleanup) {
-		cleanup();
-	}
+	if(cleanup) { cleanup(); }
 }
 
-static
-void
-runtest(int (*func)(int fd), void (*cleanup)(void), const char *callname,
-	enum rwtestmodes rw)
-{
+static void runtest(int (*func)(int fd), void (*cleanup)(void), const char *callname, enum rwtestmodes rw) {
 	int fd;
 
 	/*
@@ -182,25 +139,21 @@ runtest(int (*func)(int fd), void (*cleanup)(void), const char *callname,
 	warnx("Warning: OPEN_MAX not defined, test skipped");
 #endif
 
-	if (rw == RW_TEST_RDONLY) {
-		fd = reopen_testfile(O_RDONLY|O_CREAT);
-		if (fd < 0) {
+	if(rw == RW_TEST_RDONLY) {
+		fd = reopen_testfile(O_RDONLY | O_CREAT);
+		if(fd < 0) {
 			/* already printed a message */
-		}
-		else {
-			any_badfd(func, cleanup, callname, fd,
-				  "fd opened read-only");
+		} else {
+			any_badfd(func, cleanup, callname, fd, "fd opened read-only");
 		}
 		close(fd);
 	}
-	if (rw == RW_TEST_WRONLY) {
-		fd = reopen_testfile(O_WRONLY|O_CREAT);
-		if (fd < 0) {
+	if(rw == RW_TEST_WRONLY) {
+		fd = reopen_testfile(O_WRONLY | O_CREAT);
+		if(fd < 0) {
 			/* already printed a message */
-		}
-		else {
-			any_badfd(func, cleanup, callname, fd,
-				  "fd opened write-only");
+		} else {
+			any_badfd(func, cleanup, callname, fd, "fd opened write-only");
 		}
 		close(fd);
 	}
@@ -208,19 +161,15 @@ runtest(int (*func)(int fd), void (*cleanup)(void), const char *callname,
 
 ////////////////////////////////////////////////////////////
 
-#define T(call, rw) \
-  void                                          \
-  test_##call##_fd(void)                        \
-  {                                             \
-   	runtest(call##_badfd, NULL, #call, rw); \
-  }
+#define T(call, rw)                             \
+	void test_##call##_fd(void) {               \
+		runtest(call##_badfd, NULL, #call, rw); \
+	}
 
-#define TC(call, rw) \
-  void                                          \
-  test_##call##_fd(void)                        \
-  {                                             \
-   	runtest(call##_badfd, call##_cleanup, #call, rw);\
-  }
+#define TC(call, rw)                                      \
+	void test_##call##_fd(void) {                         \
+		runtest(call##_badfd, call##_cleanup, #call, rw); \
+	}
 
 T(read, RW_TEST_WRONLY);
 T(write, RW_TEST_RDONLY);

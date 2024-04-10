@@ -38,8 +38,7 @@ extern const struct vnode_ops sfs_fileops;
 extern const struct vnode_ops sfs_dirops;
 
 /* Macro for initializing a uio structure */
-#define SFSUIO(iov, uio, ptr, block, rw) \
-    uio_kinit(iov, uio, ptr, SFS_BLOCKSIZE, ((off_t)(block))*SFS_BLOCKSIZE, rw)
+#define SFSUIO(iov, uio, ptr, block, rw) uio_kinit(iov, uio, ptr, SFS_BLOCKSIZE, ((off_t)(block)) * SFS_BLOCKSIZE, rw)
 
 
 /* Functions in sfs_balloc.c */
@@ -48,25 +47,19 @@ void sfs_bfree(struct sfs_fs *sfs, daddr_t diskblock);
 int sfs_bused(struct sfs_fs *sfs, daddr_t diskblock);
 
 /* Functions in sfs_bmap.c */
-int sfs_bmap(struct sfs_vnode *sv, uint32_t fileblock, bool doalloc,
-		daddr_t *diskblock);
+int sfs_bmap(struct sfs_vnode *sv, uint32_t fileblock, bool doalloc, daddr_t *diskblock);
 int sfs_itrunc(struct sfs_vnode *sv, off_t len);
 
 /* Functions in sfs_dir.c */
-int sfs_dir_findname(struct sfs_vnode *sv, const char *name,
-		uint32_t *ino, int *slot, int *emptyslot);
-int sfs_dir_link(struct sfs_vnode *sv, const char *name, uint32_t ino,
-		int *slot);
+int sfs_dir_findname(struct sfs_vnode *sv, const char *name, uint32_t *ino, int *slot, int *emptyslot);
+int sfs_dir_link(struct sfs_vnode *sv, const char *name, uint32_t ino, int *slot);
 int sfs_dir_unlink(struct sfs_vnode *sv, int slot);
-int sfs_lookonce(struct sfs_vnode *sv, const char *name,
-		struct sfs_vnode **ret,
-		int *slot);
+int sfs_lookonce(struct sfs_vnode *sv, const char *name, struct sfs_vnode **ret, int *slot);
 
 /* Functions in sfs_inode.c */
 int sfs_sync_inode(struct sfs_vnode *sv);
 int sfs_reclaim(struct vnode *v);
-int sfs_loadvnode(struct sfs_fs *sfs, uint32_t ino, int forcetype,
-		struct sfs_vnode **ret);
+int sfs_loadvnode(struct sfs_fs *sfs, uint32_t ino, int forcetype, struct sfs_vnode **ret);
 int sfs_makeobj(struct sfs_fs *sfs, int type, struct sfs_vnode **ret);
 int sfs_getroot(struct fs *fs, struct vnode **ret);
 
@@ -74,8 +67,7 @@ int sfs_getroot(struct fs *fs, struct vnode **ret);
 int sfs_readblock(struct sfs_fs *sfs, daddr_t block, void *data, size_t len);
 int sfs_writeblock(struct sfs_fs *sfs, daddr_t block, void *data, size_t len);
 int sfs_io(struct sfs_vnode *sv, struct uio *uio);
-int sfs_metaio(struct sfs_vnode *sv, off_t pos, void *data, size_t len,
-	       enum uio_rw rw);
+int sfs_metaio(struct sfs_vnode *sv, off_t pos, void *data, size_t len, enum uio_rw rw);
 
 
 #endif /* _SFSPRIVATE_H_ */

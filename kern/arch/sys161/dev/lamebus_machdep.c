@@ -27,22 +27,23 @@
  * SUCH DAMAGE.
  */
 
-#include <types.h>
-#include <kern/unistd.h>
-#include <lib.h>
-#include <mips/specialreg.h>
-#include <mips/trapframe.h>
-#include <cpu.h>
-#include <spl.h>
+#include <__includeTypes.h>
 #include <clock.h>
-#include <thread.h>
+#include <cpu.h>
 #include <current.h>
-#include <membar.h>
-#include <synch.h>
-#include <mainbus.h>
-#include <sys161/bus.h>
+#include <kern/unistd.h>
 #include <lamebus/lamebus.h>
 #include <lamebus/ltrace.h>
+#include <lib.h>
+#include <mainbus.h>
+#include <membar.h>
+#include <mips/specialreg.h>
+#include <mips/trapframe.h>
+#include <spl.h>
+#include <synch.h>
+#include <sys161/bus.h>
+#include <thread.h>
+
 #include "autoconf.h"
 
 /*
@@ -60,20 +61,17 @@
  * matches the c0_compare register, the timer interrupt line is
  * asserted. Writing to c0_compare again clears the interrupt.
  */
-static
-void
-mips_timer_set(uint32_t count)
-{
+static void mips_timer_set(uint32_t count) {
 	/*
 	 * $11 == c0_compare; we can't use the symbolic name inside
 	 * the asm string.
 	 */
 	__asm volatile(
-		".set push;"		/* save assembler mode */
-		".set mips32;"		/* allow MIPS32 registers */
-		"mtc0 %0, $11;"		/* do it */
-		".set pop"		/* restore assembler mode */
-		:: "r" (count));
+		".set push;"    /* save assembler mode */
+		".set mips32;"  /* allow MIPS32 registers */
+		"mtc0 %0, $11;" /* do it */
+		".set pop"      /* restore assembler mode */
+		::"r"(count));
 }
 
 /*
@@ -83,9 +81,7 @@ mips_timer_set(uint32_t count)
  */
 static struct lamebus_softc *lamebus;
 
-void
-mainbus_bootstrap(void)
-{
+void mainbus_bootstrap(void) {
 	/* Interrupts should be off (and have been off since startup) */
 	KASSERT(curthread->t_curspl > 0);
 
@@ -122,9 +118,7 @@ mainbus_bootstrap(void)
 /*
  * Start all secondary CPUs.
  */
-void
-mainbus_start_cpus(void)
-{
+void mainbus_start_cpus(void) {
 	lamebus_start_cpus(lamebus);
 }
 
@@ -133,25 +127,21 @@ mainbus_start_cpus(void)
  * for the specified offset into the specified slot's region of the
  * LAMEbus.
  */
-void *
-lamebus_map_area(struct lamebus_softc *bus, int slot, uint32_t offset)
-{
+void *lamebus_map_area(struct lamebus_softc *bus, int slot, uint32_t offset) {
 	uint32_t address;
 
-	(void)bus;   // not needed
+	(void) bus;  // not needed
 
 	KASSERT(slot >= 0 && slot < LB_NSLOTS);
 
-	address = LB_BASEADDR + slot*LB_SLOT_SIZE + offset;
-	return (void *)address;
+	address = LB_BASEADDR + slot * LB_SLOT_SIZE + offset;
+	return (void *) address;
 }
 
 /*
  * Read a 32-bit register from a LAMEbus device.
  */
-uint32_t
-lamebus_read_register(struct lamebus_softc *bus, int slot, uint32_t offset)
-{
+uint32_t lamebus_read_register(struct lamebus_softc *bus, int slot, uint32_t offset) {
 	uint32_t *ptr;
 
 	ptr = lamebus_map_area(bus, slot, offset);
@@ -168,10 +158,7 @@ lamebus_read_register(struct lamebus_softc *bus, int slot, uint32_t offset)
 /*
  * Write a 32-bit register of a LAMEbus device.
  */
-void
-lamebus_write_register(struct lamebus_softc *bus, int slot,
-		       uint32_t offset, uint32_t val)
-{
+void lamebus_write_register(struct lamebus_softc *bus, int slot, uint32_t offset, uint32_t val) {
 	uint32_t *ptr;
 
 	ptr = lamebus_map_area(bus, slot, offset);
@@ -188,9 +175,7 @@ lamebus_write_register(struct lamebus_softc *bus, int slot,
 /*
  * Power off the system.
  */
-void
-mainbus_poweroff(void)
-{
+void mainbus_poweroff(void) {
 	/*
 	 *
 	 * Note that lamebus_write_register() doesn't actually access
@@ -203,9 +188,7 @@ mainbus_poweroff(void)
 /*
  * Reboot the system.
  */
-void
-mainbus_reboot(void)
-{
+void mainbus_reboot(void) {
 	/*
 	 * The MIPS doesn't appear to have any on-chip reset.
 	 * LAMEbus doesn't have a reset control, so we just
@@ -222,9 +205,7 @@ mainbus_reboot(void)
  * On some systems, this would return to the boot monitor. But we don't
  * have one.
  */
-void
-mainbus_halt(void)
-{
+void mainbus_halt(void) {
 	cpu_halt();
 }
 
@@ -235,9 +216,7 @@ mainbus_halt(void)
  * as to panic recursively if we do much of anything. So just power off.
  * (We'd reboot, but System/161 doesn't do that.)
  */
-void
-mainbus_panic(void)
-{
+void mainbus_panic(void) {
 	mainbus_poweroff();
 }
 
@@ -245,9 +224,7 @@ mainbus_panic(void)
  * Function to get the size of installed physical RAM from the LAMEbus
  * controller.
  */
-uint32_t
-mainbus_ramsize(void)
-{
+uint32_t mainbus_ramsize(void) {
 	uint32_t ramsize;
 
 	ramsize = lamebus_ramsize();
@@ -260,9 +237,7 @@ mainbus_ramsize(void)
 	 * be discontiguous. This is not a case we are going to worry
 	 * about.
 	 */
-	if (ramsize > 508*1024*1024) {
-		ramsize = 508*1024*1024;
-	}
+	if(ramsize > 508 * 1024 * 1024) { ramsize = 508 * 1024 * 1024; }
 
 	return ramsize;
 }
@@ -270,18 +245,14 @@ mainbus_ramsize(void)
 /*
  * Send IPI.
  */
-void
-mainbus_send_ipi(struct cpu *target)
-{
+void mainbus_send_ipi(struct cpu *target) {
 	lamebus_assert_ipi(lamebus, target);
 }
 
 /*
  * Trigger the debugger.
  */
-void
-mainbus_debugger(void)
-{
+void mainbus_debugger(void) {
 	ltrace_stop(0);
 }
 
@@ -290,13 +261,11 @@ mainbus_debugger(void)
  */
 
 /* Wiring of LAMEbus interrupts to bits in the cause register */
-#define LAMEBUS_IRQ_BIT  0x00000400	/* all system bus slots */
-#define LAMEBUS_IPI_BIT  0x00000800	/* inter-processor interrupt */
-#define MIPS_TIMER_BIT   0x00008000	/* on-chip timer */
+#define LAMEBUS_IRQ_BIT 0x00000400 /* all system bus slots */
+#define LAMEBUS_IPI_BIT 0x00000800 /* inter-processor interrupt */
+#define MIPS_TIMER_BIT 0x00008000  /* on-chip timer */
 
-void
-mainbus_interrupt(struct trapframe *tf)
-{
+void mainbus_interrupt(struct trapframe *tf) {
 	uint32_t cause;
 	bool seen = false;
 
@@ -304,16 +273,16 @@ mainbus_interrupt(struct trapframe *tf)
 	KASSERT(curthread->t_curspl > 0);
 
 	cause = tf->tf_cause;
-	if (cause & LAMEBUS_IRQ_BIT) {
+	if(cause & LAMEBUS_IRQ_BIT) {
 		lamebus_interrupt(lamebus);
 		seen = true;
 	}
-	if (cause & LAMEBUS_IPI_BIT) {
+	if(cause & LAMEBUS_IPI_BIT) {
 		interprocessor_interrupt();
 		lamebus_clear_ipi(lamebus, curcpu);
 		seen = true;
 	}
-	if (cause & MIPS_TIMER_BIT) {
+	if(cause & MIPS_TIMER_BIT) {
 		/* Reset the timer (this clears the interrupt) */
 		mips_timer_set(CPU_FREQUENCY / HZ);
 		/* and call hardclock */
@@ -321,8 +290,8 @@ mainbus_interrupt(struct trapframe *tf)
 		seen = true;
 	}
 
-	if (!seen) {
-		if ((cause & CCA_IRQS) == 0) {
+	if(!seen) {
+		if((cause & CCA_IRQS) == 0) {
 			/*
 			 * Don't panic here; this can happen if an
 			 * interrupt line asserts (very) briefly and
@@ -330,15 +299,13 @@ mainbus_interrupt(struct trapframe *tf)
 			 * reading the cause register.  This was
 			 * actually seen... once.
 			 */
-		}
-		else {
+		} else {
 			/*
 			 * But if we get an interrupt on an interrupt
 			 * line that's not supposed to be wired up,
 			 * complain.
 			 */
-			panic("Unknown interrupt; cause register is %08x\n",
-			      cause);
+			panic("Unknown interrupt; cause register is %08x\n", cause);
 		}
 	}
 }

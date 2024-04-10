@@ -27,20 +27,20 @@
  * SUCH DAMAGE.
  */
 
+#include "inode.h"
+
+#include <assert.h>
+#include <err.h>
+#include <kern/sfs.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
-#include <err.h>
 
 #include "compat.h"
-#include <kern/sfs.h>
-
-#include "utils.h"
-#include "sfs.h"
 #include "freemap.h"
-#include "inode.h"
 #include "main.h"
+#include "sfs.h"
+#include "utils.h"
 
 /*
  * Stuff we remember about inodes.
@@ -48,8 +48,8 @@
  */
 struct inodeinfo {
 	uint32_t ino;
-	uint32_t linkcount;	/* files only */
-	int visited;		/* dirs only */
+	uint32_t linkcount; /* files only */
+	int visited;        /* dirs only */
 	int type;
 };
 
@@ -66,17 +66,13 @@ static int inodes_sorted = 0;
 /*
  * Add an entry to the inode table, realloc'ing it if needed.
  */
-static
-void
-inode_addtable(uint32_t ino, int type)
-{
+static void inode_addtable(uint32_t ino, int type) {
 	unsigned newmax;
 
 	assert(ninodes <= maxinodes);
-	if (ninodes == maxinodes) {
+	if(ninodes == maxinodes) {
 		newmax = maxinodes ? maxinodes * 2 : 4;
-		inodes = dorealloc(inodes, maxinodes * sizeof(inodes[0]),
-				   newmax * sizeof(inodes[0]));
+		inodes = dorealloc(inodes, maxinodes * sizeof(inodes[0]), newmax * sizeof(inodes[0]));
 		maxinodes = newmax;
 	}
 	inodes[ninodes].ino = ino;
@@ -90,19 +86,12 @@ inode_addtable(uint32_t ino, int type)
 /*
  * Compare function for inodes.
  */
-static
-int
-inode_compare(const void *av, const void *bv)
-{
+static int inode_compare(const void *av, const void *bv) {
 	const struct inodeinfo *a = av;
 	const struct inodeinfo *b = bv;
 
-	if (a->ino < b->ino) {
-		return -1;
-	}
-	if (a->ino > b->ino) {
-		return 1;
-	}
+	if(a->ino < b->ino) { return -1; }
+	if(a->ino > b->ino) { return 1; }
 	/*
 	 * There should be no duplicates in the table! But C99 makes
 	 * no guarantees about whether the implementation of qsort can
@@ -116,9 +105,7 @@ inode_compare(const void *av, const void *bv)
 /*
  * After pass1, we sort the inode table for faster access.
  */
-void
-inode_sorttable(void)
-{
+void inode_sorttable(void) {
 	qsort(inodes, ninodes, sizeof(inodes[0]), inode_compare);
 	inodes_sorted = 1;
 }
@@ -132,10 +119,7 @@ inode_sorttable(void)
  * pass2.c, we'll need to be able to ask if an inode number is valid
  * and names a directory.)
  */
-static
-struct inodeinfo *
-inode_find(uint32_t ino)
-{
+static struct inodeinfo *inode_find(uint32_t ino) {
 	unsigned min, max, i;
 
 	assert(inodes_sorted);
@@ -143,19 +127,15 @@ inode_find(uint32_t ino)
 
 	min = 0;
 	max = ninodes;
-	while (1) {
+	while(1) {
 		assert(min <= max);
-		if (min == max) {
-			errx(EXIT_UNRECOV, "FATAL: inode %u wasn't found in my inode table", ino);
-		}
-		i = min + (max - min)/2;
-		if (inodes[i].ino < ino) {
+		if(min == max) { errx(EXIT_UNRECOV, "FATAL: inode %u wasn't found in my inode table", ino); }
+		i = min + (max - min) / 2;
+		if(inodes[i].ino < ino) {
 			min = i + 1;
-		}
-		else if (inodes[i].ino > ino) {
+		} else if(inodes[i].ino > ino) {
 			max = i;
-		}
-		else {
+		} else {
 			assert(inodes[i].ino == ino);
 			return &inodes[i];
 		}
@@ -173,13 +153,11 @@ inode_find(uint32_t ino)
  * after all inodes have been added. In the FUTURE this could be
  * changed to a better data structure.
  */
-int
-inode_add(uint32_t ino, int type)
-{
+int inode_add(uint32_t ino, int type) {
 	unsigned i;
 
-	for (i=0; i<ninodes; i++) {
-		if (inodes[i].ino==ino) {
+	for(i = 0; i < ninodes; i++) {
+		if(inodes[i].ino == ino) {
 			assert(inodes[i].linkcount == 0);
 			assert(inodes[i].type == type);
 			return 1;
@@ -198,17 +176,13 @@ inode_add(uint32_t ino, int type)
  * Note that there is no way to clear the visited flag for now because
  * it's only used once (by pass2).
  */
-int
-inode_visitdir(uint32_t ino)
-{
+int inode_visitdir(uint32_t ino) {
 	struct inodeinfo *inf;
 
 	inf = inode_find(ino);
 	assert(inf->type == SFS_TYPE_DIR);
 	assert(inf->linkcount == 0);
-	if (inf->visited) {
-		return 1;
-	}
+	if(inf->visited) { return 1; }
 	inf->visited = 1;
 	return 0;
 }
@@ -218,9 +192,7 @@ inode_visitdir(uint32_t ino)
  * does. (And that, in turn, is because the link count of a directory
  * is a local property.)
  */
-void
-inode_addlink(uint32_t ino)
-{
+void inode_addlink(uint32_t ino) {
 	struct inodeinfo *inf;
 
 	inf = inode_find(ino);
@@ -233,14 +205,12 @@ inode_addlink(uint32_t ino)
  * Correct link counts. This is effectively pass3. (FUTURE: change the
  * name accordingly.)
  */
-void
-inode_adjust_filelinks(void)
-{
+void inode_adjust_filelinks(void) {
 	struct sfs_dinode sfi;
 	unsigned i;
 
-	for (i=0; i<ninodes; i++) {
-		if (inodes[i].type == SFS_TYPE_DIR) {
+	for(i = 0; i < ninodes; i++) {
+		if(inodes[i].type == SFS_TYPE_DIR) {
 			/* directory */
 			continue;
 		}
@@ -252,15 +222,12 @@ inode_adjust_filelinks(void)
 		sfs_readinode(inodes[i].ino, &sfi);
 		assert(sfi.sfi_type == SFS_TYPE_FILE);
 
-		if (sfi.sfi_linkcount != inodes[i].linkcount) {
-			warnx("File %lu link count %lu should be %lu (fixed)",
-			      (unsigned long) inodes[i].ino,
-			      (unsigned long) sfi.sfi_linkcount,
-			      (unsigned long) inodes[i].linkcount);
+		if(sfi.sfi_linkcount != inodes[i].linkcount) {
+			warnx("File %lu link count %lu should be %lu (fixed)", (unsigned long) inodes[i].ino, (unsigned long) sfi.sfi_linkcount,
+				(unsigned long) inodes[i].linkcount);
 			sfi.sfi_linkcount = inodes[i].linkcount;
 			setbadness(EXIT_RECOV);
 			sfs_writeinode(inodes[i].ino, &sfi);
 		}
 	}
 }
-

@@ -27,13 +27,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <err.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include <err.h>
-#include <errno.h>
 
 /*
  * Test for seek positions > 2^32.
@@ -62,60 +62,38 @@
 
 #define TESTFILE "bigseekfile"
 
-static const char *slogans[] = {
-	"QUO USQUE TANDEM ABUTERE CATILINA PATENTIA NOSTRA",
-	"QUEM IN FINEM SESE EFFRENATA IACTABIT AUDACIA"
-};
+static const char *slogans[] = {"QUO USQUE TANDEM ABUTERE CATILINA PATENTIA NOSTRA", "QUEM IN FINEM SESE EFFRENATA IACTABIT AUDACIA"};
 
-static
-void
-write_slogan(int fd, unsigned which, bool failok)
-{
+static void write_slogan(int fd, unsigned which, bool failok) {
 	size_t len;
 	ssize_t r;
 
 	len = strlen(slogans[which]);
 	r = write(fd, slogans[which], len);
-	if (r < 0) {
-		if (failok && errno == EFBIG) {
-			return;
-		}
+	if(r < 0) {
+		if(failok && errno == EFBIG) { return; }
 		err(1, "write");
 	}
-	if (failok) {
-		errx(1, "write: expected failure but wrote %zd bytes", r);
-	}
-	if ((size_t)r != len) {
-		errx(1, "write: result %zd bytes, expected %zu", r, len);
-	}
+	if(failok) { errx(1, "write: expected failure but wrote %zd bytes", r); }
+	if((size_t) r != len) { errx(1, "write: result %zd bytes, expected %zu", r, len); }
 }
 
-static
-void
-check_slogan(int fd, unsigned which)
-{
+static void check_slogan(int fd, unsigned which) {
 	char buf[256];
 	size_t len;
 	ssize_t r;
 	unsigned i, wrongcount;
 
 	r = read(fd, buf, sizeof(buf));
-	if (r < 0) {
-		err(1, "read");
-	}
-	if (r == 0) {
-		errx(1, "read: Unexpected EOF");
-	}
+	if(r < 0) { err(1, "read"); }
+	if(r == 0) { errx(1, "read: Unexpected EOF"); }
 
 	/* we should get either a full buffer or the length of the slogan */
 	len = strlen(slogans[which]);
-	if ((size_t)r != sizeof(buf) && (size_t)r != len) {
-		errx(1, "read: result %zd bytes, expected %zu or %zu",
-		     r, sizeof(buf), len);
-	}
+	if((size_t) r != sizeof(buf) && (size_t) r != len) { errx(1, "read: result %zd bytes, expected %zu or %zu", r, sizeof(buf), len); }
 
 	/* slogan should match */
-	if (memcmp(buf, slogans[which], len) != 0) {
+	if(memcmp(buf, slogans[which], len) != 0) {
 		warnx("read: got wrong data");
 		warnx("expected: %s", slogans[which]);
 		buf[sizeof(buf) - 1] = 0;
@@ -124,64 +102,46 @@ check_slogan(int fd, unsigned which)
 
 	/* bytes past the slogan (if any) should be 0 */
 	wrongcount = 0;
-	for (i=len; i<(size_t)r; i++) {
-		if (buf[i] != 0) {
-			warnx("read: buf[%zu] was 0x%x, expected 0", i,
-			      (unsigned char)buf[i]);
+	for(i = len; i < (size_t) r; i++) {
+		if(buf[i] != 0) {
+			warnx("read: buf[%zu] was 0x%x, expected 0", i, (unsigned char) buf[i]);
 			wrongcount++;
 		}
 	}
-	if (wrongcount > 0) {
-		errx(1, "%u bytes of trash in file", wrongcount);
-	}
+	if(wrongcount > 0) { errx(1, "%u bytes of trash in file", wrongcount); }
 }
 
-static
-void
-try_reading(int fd)
-{
+static void try_reading(int fd) {
 	char buf[16];
 	ssize_t r;
 
 	r = read(fd, buf, sizeof(buf));
-	if (r == 0) {
+	if(r == 0) {
 		/* expected EOF */
 		return;
 	}
-	if (r < 0) {
-		err(1, "read");
-	}
+	if(r < 0) { err(1, "read"); }
 	errx(1, "read: Expected EOF but got %zd bytes", r);
 }
 
-static
-void
-try_writing(int fd)
-{
+static void try_writing(int fd) {
 	write_slogan(fd, 1, true);
 }
 
-static
-void
-dolseek(int fd, off_t pos, int whence, const char *whencestr, off_t expected)
-{
+static void dolseek(int fd, off_t pos, int whence, const char *whencestr, off_t expected) {
 	off_t result;
 
 	result = lseek(fd, pos, whence);
-	if (result == -1) {
-		err(1, "lseek(fd, 0x%llx, %s)", pos, whencestr);
-	}
-	if (result != expected) {
-		errx(1, "lseek(fd, 0x%llx, %s): Wrong return value"
-		     " (got 0x%llx, expected 0x%llx)", pos, whencestr,
-		     result, expected);
+	if(result == -1) { err(1, "lseek(fd, 0x%llx, %s)", pos, whencestr); }
+	if(result != expected) {
+		errx(1,
+			"lseek(fd, 0x%llx, %s): Wrong return value"
+			" (got 0x%llx, expected 0x%llx)",
+			pos, whencestr, result, expected);
 	}
 }
 
-static
-void
-try_seeking(int fd, off_t pos, off_t cursize)
-{
+static void try_seeking(int fd, off_t pos, off_t cursize) {
 	printf("Seeking to (and near) 0x%llx\n", pos);
 
 	/* Go to the place. */
@@ -190,14 +150,13 @@ try_seeking(int fd, off_t pos, off_t cursize)
 	/* Go to where we already are. */
 	dolseek(fd, 0, SEEK_CUR, "SEEK_CUR", pos);
 
-	if (pos >= 10) {
+	if(pos >= 10) {
 		/* Back up a little. */
 		dolseek(fd, -10, SEEK_CUR, "SEEK_CUR", pos - 10);
 
 		/* Forward a little. */
 		dolseek(fd, 20, SEEK_CUR, "SEEK_CUR", pos + 10);
-	}
-	else {
+	} else {
 		/* Just forward a little. */
 		dolseek(fd, 10, SEEK_CUR, "SEEK_CUR", pos + 10);
 	}
@@ -209,46 +168,42 @@ try_seeking(int fd, off_t pos, off_t cursize)
 	dolseek(fd, pos, SEEK_SET, "SEEK_SET", pos);
 }
 
-int
-main(void)
-{
+int main(void) {
 	off_t cursize;
 	int fd;
 
 	printf("Creating file...\n");
-	fd = open(TESTFILE, O_RDWR|O_CREAT|O_TRUNC, 0664);
-	if (fd < 0) {
-		err(1, "%s", TESTFILE);
-	}
+	fd = open(TESTFILE, O_RDWR | O_CREAT | O_TRUNC, 0664);
+	if(fd < 0) { err(1, "%s", TESTFILE); }
 
 	printf("Writing something at offset 0\n");
 	write_slogan(fd, 0, false);
 	cursize = strlen(slogans[0]);
 
-	try_seeking(fd, (off_t)0x1000LL, cursize);
+	try_seeking(fd, (off_t) 0x1000LL, cursize);
 
 	printf("Writing something else\n");
 	write_slogan(fd, 1, false);
-	cursize = (off_t)0x1000LL + strlen(slogans[1]);
+	cursize = (off_t) 0x1000LL + strlen(slogans[1]);
 
-	try_seeking(fd, (off_t)0, cursize);
+	try_seeking(fd, (off_t) 0, cursize);
 
 	/* If seek is totally bust, this will fail. */
 	printf("Checking what we wrote\n");
 	check_slogan(fd, 0);
 
-	try_seeking(fd, (off_t)0x1000LL, cursize);
+	try_seeking(fd, (off_t) 0x1000LL, cursize);
 	printf("Checking the other thing we wrote\n");
 	check_slogan(fd, 1);
 
-	try_seeking(fd, (off_t)0x20LL, cursize);
-	try_seeking(fd, (off_t)0x7fffffffLL, cursize);
-	try_seeking(fd, (off_t)0x80000000LL, cursize);
-	try_seeking(fd, (off_t)0x80000020LL, cursize);
-	try_seeking(fd, (off_t)0x100000000LL, cursize);
-	try_seeking(fd, (off_t)0x100000020LL, cursize);
-	try_seeking(fd, (off_t)0x180000000LL, cursize);
-	try_seeking(fd, (off_t)0x180000020LL, cursize);
+	try_seeking(fd, (off_t) 0x20LL, cursize);
+	try_seeking(fd, (off_t) 0x7fffffffLL, cursize);
+	try_seeking(fd, (off_t) 0x80000000LL, cursize);
+	try_seeking(fd, (off_t) 0x80000020LL, cursize);
+	try_seeking(fd, (off_t) 0x100000000LL, cursize);
+	try_seeking(fd, (off_t) 0x100000020LL, cursize);
+	try_seeking(fd, (off_t) 0x180000000LL, cursize);
+	try_seeking(fd, (off_t) 0x180000020LL, cursize);
 
 	printf("Now trying to read (should get EOF)\n");
 	try_reading(fd);
@@ -256,7 +211,7 @@ main(void)
 	printf("Now trying to write (should get EFBIG)\n");
 	try_writing(fd);
 
-	try_seeking(fd, (off_t)0x100000000LL, cursize);
+	try_seeking(fd, (off_t) 0x100000000LL, cursize);
 
 	/* If seek truncates to 32 bits, this might read the slogan instead */
 	printf("Trying to read again (should get EOF)\n");

@@ -32,7 +32,7 @@
 
 
 #include <cdefs.h> /* for __DEAD */
-struct trapframe; /* from <machine/trapframe.h> */
+struct trapframe;  /* from <machine/trapframe.h> */
 
 /*
  * The system call dispatcher.
@@ -48,8 +48,7 @@ void syscall(struct trapframe *tf);
 void enter_forked_process(struct trapframe *tf);
 
 /* Enter user mode. Does not return. */
-__DEAD void enter_new_process(int argc, userptr_t argv, userptr_t env,
-		       vaddr_t stackptr, vaddr_t entrypoint);
+__DEAD void enter_new_process(int argc, userptr_t argv, userptr_t env, vaddr_t stackptr, vaddr_t entrypoint);
 
 
 /*

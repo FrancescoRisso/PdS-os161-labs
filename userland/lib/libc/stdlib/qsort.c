@@ -27,34 +27,28 @@
  * SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 /*
  * qsort() for OS/161, where it isn't in libc.
  */
-void
-qsort(void *vdata, unsigned num, size_t size,
-      int (*f)(const void *, const void *))
-{
+void qsort(void *vdata, unsigned num, size_t size, int (*f)(const void *, const void *)) {
 	unsigned pivot, head, tail;
 	char *data = vdata;
 	char tmp[size];
 
-#define COMPARE(aa, bb) \
-		((aa) == (bb) ? 0 : f(data + (aa) * size, data + (bb) * size))
-#define EXCHANGE(aa, bb) \
-		memcpy(tmp, data + (aa) * size, size);			\
-		memcpy(data + (aa) * size, data + (bb) * size, size);	\
-		memcpy(data + (bb) * size, tmp, size)
+#define COMPARE(aa, bb) ((aa) == (bb) ? 0 : f(data + (aa) *size, data + (bb) *size))
+#define EXCHANGE(aa, bb)                                \
+	memcpy(tmp, data + (aa) *size, size);               \
+	memcpy(data + (aa) *size, data + (bb) *size, size); \
+	memcpy(data + (bb) *size, tmp, size)
 
 
-	if (num <= 1) {
-		return;
-	}
-	if (num == 2) {
-		if (COMPARE(0, 1) > 0) {
+	if(num <= 1) { return; }
+	if(num == 2) {
+		if(COMPARE(0, 1) > 0) {
 			EXCHANGE(0, 1);
 			return;
 		}
@@ -73,19 +67,16 @@ qsort(void *vdata, unsigned num, size_t size,
 	head = 0;
 	tail = num - 1;
 
-	while (head < tail) {
-		if (COMPARE(head, pivot) <= 0) {
+	while(head < tail) {
+		if(COMPARE(head, pivot) <= 0) {
 			head++;
-		}
-		else if (COMPARE(tail, pivot) > 0) {
+		} else if(COMPARE(tail, pivot) > 0) {
 			tail--;
-		}
-		else {
+		} else {
 			EXCHANGE(head, tail);
-			if (pivot == head) {
+			if(pivot == head) {
 				pivot = tail;
-			}
-			else if (pivot == tail) {
+			} else if(pivot == tail) {
 				pivot = head;
 			}
 			head++;
@@ -106,9 +97,7 @@ qsort(void *vdata, unsigned num, size_t size,
 	 * Henceforth use "tail" to hold the index of the first entry
 	 * of the back portion of the array.
 	 */
-	if (head > tail || COMPARE(head, pivot) <= 0) {
-		tail++;
-	}
+	if(head > tail || COMPARE(head, pivot) <= 0) { tail++; }
 
 	/*
 	 * 4. If we got a bad pivot that gave us only one partition,
@@ -120,19 +109,13 @@ qsort(void *vdata, unsigned num, size_t size,
 	 * there is no rest, the array is already sorted and we're
 	 * done.)
 	 */
-	if (tail == num) {
-		if (pivot < num - 1) {
-			if (COMPARE(pivot, num - 1) > 0) {
-				EXCHANGE(pivot, num - 1);
-			}
+	if(tail == num) {
+		if(pivot < num - 1) {
+			if(COMPARE(pivot, num - 1) > 0) { EXCHANGE(pivot, num - 1); }
 		}
 		tail = num - 1;
-		while (tail > 0 && COMPARE(tail - 1, tail) == 0) {
-			tail--;
-		}
-		if (tail > 0) {
-			qsort(vdata, tail, size, f);
-		}
+		while(tail > 0 && COMPARE(tail - 1, tail) == 0) { tail--; }
+		if(tail > 0) { qsort(vdata, tail, size, f); }
 		return;
 	}
 	assert(tail > 0 && tail < num);
@@ -141,5 +124,5 @@ qsort(void *vdata, unsigned num, size_t size,
 	 * 5. Recurse on each subpart of the array.
 	 */
 	qsort(vdata, tail, size, f);
-	qsort((char *)vdata + tail * size, num - tail, size, f);
+	qsort((char *) vdata + tail * size, num - tail, size, f);
 }

@@ -33,7 +33,7 @@
  */
 
 #ifdef _KERNEL
-#include <types.h>
+#include <__includeTypes.h>
 #include <lib.h>
 #else
 #include <stdint.h>
@@ -45,9 +45,7 @@
  * regions correctly.
  */
 
-void *
-memmove(void *dst, const void *src, size_t len)
-{
+void *memmove(void *dst, const void *src, size_t len) {
 	size_t i;
 
 	/*
@@ -64,7 +62,7 @@ memmove(void *dst, const void *src, size_t len)
 	 *      dest:       dddddddd
 	 *      src:    ssssssss   ^
 	 *              |   ^  |___|
-         *              |___|
+	 *              |___|
 	 *
 	 * If the destination is below the source, we have to copy
 	 * front to back.
@@ -72,10 +70,10 @@ memmove(void *dst, const void *src, size_t len)
 	 *      dest:   dddddddd
 	 *      src:    ^   ssssssss
 	 *              |___|  ^   |
-         *                     |___|
+	 *                     |___|
 	 */
 
-	if ((uintptr_t)dst < (uintptr_t)src) {
+	if((uintptr_t) dst < (uintptr_t) src) {
 		/*
 		 * As author/maintainer of libc, take advantage of the
 		 * fact that we know memcpy copies forwards.
@@ -88,10 +86,7 @@ memmove(void *dst, const void *src, size_t len)
 	 * information.
 	 */
 
-	if ((uintptr_t)dst % sizeof(long) == 0 &&
-	    (uintptr_t)src % sizeof(long) == 0 &&
-	    len % sizeof(long) == 0) {
-
+	if((uintptr_t) dst % sizeof(long) == 0 && (uintptr_t) src % sizeof(long) == 0 && len % sizeof(long) == 0) {
 		long *d = dst;
 		const long *s = src;
 
@@ -100,17 +95,12 @@ memmove(void *dst, const void *src, size_t len)
 		 * i is unsigned -- so testing i>=0 doesn't work.
 		 */
 
-		for (i=len/sizeof(long); i>0; i--) {
-			d[i-1] = s[i-1];
-		}
-	}
-	else {
+		for(i = len / sizeof(long); i > 0; i--) { d[i - 1] = s[i - 1]; }
+	} else {
 		char *d = dst;
 		const char *s = src;
 
-		for (i=len; i>0; i--) {
-			d[i-1] = s[i-1];
-		}
+		for(i = len; i > 0; i--) { d[i - 1] = s[i - 1]; }
 	}
 
 	return dst;

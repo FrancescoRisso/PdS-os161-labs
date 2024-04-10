@@ -33,7 +33,7 @@
  */
 
 #ifdef _KERNEL
-#include <types.h>
+#include <__includeTypes.h>
 #include <lib.h>
 #else
 #include <string.h>
@@ -43,25 +43,19 @@
  * C standard string function: find leftmost instance of a character
  * in a string.
  */
-char *
-strchr(const char *s, int ch_arg)
-{
+char *strchr(const char *s, int ch_arg) {
 	/* avoid sign-extension problems */
 	const char ch = ch_arg;
 
 	/* scan from left to right */
-	while (*s) {
+	while(*s) {
 		/* if we hit it, return it */
-		if (*s == ch) {
-			return (char *)s;
-		}
+		if(*s == ch) { return (char *) s; }
 		s++;
 	}
 
 	/* if we were looking for the 0, return that */
-	if (*s == ch) {
-		return (char *)s;
-	}
+	if(*s == ch) { return (char *) s; }
 
 	/* didn't find it */
 	return NULL;

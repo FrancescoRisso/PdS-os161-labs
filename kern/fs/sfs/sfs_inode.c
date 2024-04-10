@@ -32,29 +32,25 @@
  *
  * Inode-level operations and vnode/inode lifecycle logic.
  */
-#include <types.h>
+#include <__includeTypes.h>
 #include <kern/errno.h>
 #include <lib.h>
-#include <vfs.h>
 #include <sfs.h>
+#include <vfs.h>
+
 #include "sfsprivate.h"
 
 
 /*
  * Write an on-disk inode structure back out to disk.
  */
-int
-sfs_sync_inode(struct sfs_vnode *sv)
-{
+int sfs_sync_inode(struct sfs_vnode *sv) {
 	struct sfs_fs *sfs = sv->sv_absvn.vn_fs->fs_data;
 	int result;
 
-	if (sv->sv_dirty) {
-		result = sfs_writeblock(sfs, sv->sv_ino, &sv->sv_i,
-					sizeof(sv->sv_i));
-		if (result) {
-			return result;
-		}
+	if(sv->sv_dirty) {
+		result = sfs_writeblock(sfs, sv->sv_ino, &sv->sv_i, sizeof(sv->sv_i));
+		if(result) { return result; }
 		sv->sv_dirty = false;
 	}
 	return 0;
@@ -65,9 +61,7 @@ sfs_sync_inode(struct sfs_vnode *sv)
  *
  * This function should try to avoid returning errors other than EBUSY.
  */
-int
-sfs_reclaim(struct vnode *v)
-{
+int sfs_reclaim(struct vnode *v) {
 	struct sfs_vnode *sv = v->vn_data;
 	struct sfs_fs *sfs = v->vn_fs->fs_data;
 	unsigned ix, i, num;
@@ -81,10 +75,9 @@ sfs_reclaim(struct vnode *v)
 	 * this with sfs_loadvnode.)
 	 */
 	spinlock_acquire(&v->vn_countlock);
-	if (v->vn_refcount != 1) {
-
+	if(v->vn_refcount != 1) {
 		/* consume the reference VOP_DECREF gave us */
-		KASSERT(v->vn_refcount>1);
+		KASSERT(v->vn_refcount > 1);
 		v->vn_refcount--;
 
 		spinlock_release(&v->vn_countlock);
@@ -94,9 +87,9 @@ sfs_reclaim(struct vnode *v)
 	spinlock_release(&v->vn_countlock);
 
 	/* If there are no on-disk references to the file either, erase it. */
-	if (sv->sv_i.sfi_linkcount == 0) {
+	if(sv->sv_i.sfi_linkcount == 0) {
 		result = sfs_itrunc(sv, 0);
-		if (result) {
+		if(result) {
 			vfs_biglock_release();
 			return result;
 		}
@@ -104,31 +97,26 @@ sfs_reclaim(struct vnode *v)
 
 	/* Sync the inode to disk */
 	result = sfs_sync_inode(sv);
-	if (result) {
+	if(result) {
 		vfs_biglock_release();
 		return result;
 	}
 
 	/* If there are no on-disk references, discard the inode */
-	if (sv->sv_i.sfi_linkcount==0) {
-		sfs_bfree(sfs, sv->sv_ino);
-	}
+	if(sv->sv_i.sfi_linkcount == 0) { sfs_bfree(sfs, sv->sv_ino); }
 
 	/* Remove the vnode structure from the table in the struct sfs_fs. */
 	num = vnodearray_num(sfs->sfs_vnodes);
 	ix = num;
-	for (i=0; i<num; i++) {
+	for(i = 0; i < num; i++) {
 		struct vnode *v2 = vnodearray_get(sfs->sfs_vnodes, i);
 		struct sfs_vnode *sv2 = v2->vn_data;
-		if (sv2 == sv) {
+		if(sv2 == sv) {
 			ix = i;
 			break;
 		}
 	}
-	if (ix == num) {
-		panic("sfs: %s: reclaim vnode %u not in vnode pool\n",
-		      sfs->sfs_sb.sb_volname, sv->sv_ino);
-	}
+	if(ix == num) { panic("sfs: %s: reclaim vnode %u not in vnode pool\n", sfs->sfs_sb.sb_volname, sv->sv_ino); }
 	vnodearray_remove(sfs->sfs_vnodes, ix);
 
 	vnode_cleanup(&sv->sv_absvn);
@@ -146,10 +134,7 @@ sfs_reclaim(struct vnode *v)
  * Function to load a inode into memory as a vnode, or dig up one
  * that's already resident.
  */
-int
-sfs_loadvnode(struct sfs_fs *sfs, uint32_t ino, int forcetype,
-		 struct sfs_vnode **ret)
-{
+int sfs_loadvnode(struct sfs_fs *sfs, uint32_t ino, int forcetype, struct sfs_vnode **ret) {
 	struct vnode *v;
 	struct sfs_vnode *sv;
 	const struct vnode_ops *ops;
@@ -160,21 +145,18 @@ sfs_loadvnode(struct sfs_fs *sfs, uint32_t ino, int forcetype,
 	num = vnodearray_num(sfs->sfs_vnodes);
 
 	/* Linear search. Is this too slow? You decide. */
-	for (i=0; i<num; i++) {
+	for(i = 0; i < num; i++) {
 		v = vnodearray_get(sfs->sfs_vnodes, i);
 		sv = v->vn_data;
 
 		/* Every inode in memory must be in an allocated block */
-		if (!sfs_bused(sfs, sv->sv_ino)) {
-			panic("sfs: %s: Found inode %u in unallocated block\n",
-			      sfs->sfs_sb.sb_volname, sv->sv_ino);
-		}
+		if(!sfs_bused(sfs, sv->sv_ino)) { panic("sfs: %s: Found inode %u in unallocated block\n", sfs->sfs_sb.sb_volname, sv->sv_ino); }
 
-		if (sv->sv_ino==ino) {
+		if(sv->sv_ino == ino) {
 			/* Found */
 
 			/* forcetype is only allowed when creating objects */
-			KASSERT(forcetype==SFS_TYPE_INVAL);
+			KASSERT(forcetype == SFS_TYPE_INVAL);
 
 			VOP_INCREF(&sv->sv_absvn);
 			*ret = sv;
@@ -185,19 +167,19 @@ sfs_loadvnode(struct sfs_fs *sfs, uint32_t ino, int forcetype,
 	/* Didn't have it loaded; load it */
 
 	sv = kmalloc(sizeof(struct sfs_vnode));
-	if (sv==NULL) {
-		return ENOMEM;
-	}
+	if(sv == NULL) { return ENOMEM; }
 
 	/* Must be in an allocated block */
-	if (!sfs_bused(sfs, ino)) {
-		panic("sfs: %s: Tried to load inode %u from "
-		      "unallocated block\n", sfs->sfs_sb.sb_volname, ino);
+	if(!sfs_bused(sfs, ino)) {
+		panic(
+			"sfs: %s: Tried to load inode %u from "
+			"unallocated block\n",
+			sfs->sfs_sb.sb_volname, ino);
 	}
 
 	/* Read the block the inode is in */
 	result = sfs_readblock(sfs, ino, &sv->sv_i, sizeof(sv->sv_i));
-	if (result) {
+	if(result) {
 		kfree(sv);
 		return result;
 	}
@@ -210,7 +192,7 @@ sfs_loadvnode(struct sfs_fs *sfs, uint32_t ino, int forcetype,
 	 * block on disk will have been zeroed out by sfs_balloc and
 	 * thus the type recorded there will be SFS_TYPE_INVAL.
 	 */
-	if (forcetype != SFS_TYPE_INVAL) {
+	if(forcetype != SFS_TYPE_INVAL) {
 		KASSERT(sv->sv_i.sfi_type == SFS_TYPE_INVAL);
 		sv->sv_i.sfi_type = forcetype;
 		sv->sv_dirty = true;
@@ -219,22 +201,19 @@ sfs_loadvnode(struct sfs_fs *sfs, uint32_t ino, int forcetype,
 	/*
 	 * Choose the function table based on the object type.
 	 */
-	switch (sv->sv_i.sfi_type) {
-	    case SFS_TYPE_FILE:
-		ops = &sfs_fileops;
-		break;
-	    case SFS_TYPE_DIR:
-		ops = &sfs_dirops;
-		break;
-	    default:
-		panic("sfs: %s: loadvnode: Invalid inode type "
-		      "(inode %u, type %u)\n", sfs->sfs_sb.sb_volname,
-		      ino, sv->sv_i.sfi_type);
+	switch(sv->sv_i.sfi_type) {
+		case SFS_TYPE_FILE: ops = &sfs_fileops; break;
+		case SFS_TYPE_DIR: ops = &sfs_dirops; break;
+		default:
+			panic(
+				"sfs: %s: loadvnode: Invalid inode type "
+				"(inode %u, type %u)\n",
+				sfs->sfs_sb.sb_volname, ino, sv->sv_i.sfi_type);
 	}
 
 	/* Call the common vnode initializer */
 	result = vnode_init(&sv->sv_absvn, ops, &sfs->sfs_absfs, sv);
-	if (result) {
+	if(result) {
 		kfree(sv);
 		return result;
 	}
@@ -244,7 +223,7 @@ sfs_loadvnode(struct sfs_fs *sfs, uint32_t ino, int forcetype,
 
 	/* Add it to our table */
 	result = vnodearray_add(sfs->sfs_vnodes, &sv->sv_absvn, NULL);
-	if (result) {
+	if(result) {
 		vnode_cleanup(&sv->sv_absvn);
 		kfree(sv);
 		return result;
@@ -258,9 +237,7 @@ sfs_loadvnode(struct sfs_fs *sfs, uint32_t ino, int forcetype,
 /*
  * Create a new filesystem object and hand back its vnode.
  */
-int
-sfs_makeobj(struct sfs_fs *sfs, int type, struct sfs_vnode **ret)
-{
+int sfs_makeobj(struct sfs_fs *sfs, int type, struct sfs_vnode **ret) {
 	uint32_t ino;
 	int result;
 
@@ -270,18 +247,14 @@ sfs_makeobj(struct sfs_fs *sfs, int type, struct sfs_vnode **ret)
 	 */
 
 	result = sfs_balloc(sfs, &ino);
-	if (result) {
-		return result;
-	}
+	if(result) { return result; }
 
 	/*
 	 * Now load a vnode for it.
 	 */
 
 	result = sfs_loadvnode(sfs, ino, type, ret);
-	if (result) {
-		sfs_bfree(sfs, ino);
-	}
+	if(result) { sfs_bfree(sfs, ino); }
 	return result;
 }
 
@@ -289,9 +262,7 @@ sfs_makeobj(struct sfs_fs *sfs, int type, struct sfs_vnode **ret)
  * Get vnode for the root of the filesystem.
  * The root vnode is always found in block 1 (SFS_ROOTDIR_INO).
  */
-int
-sfs_getroot(struct fs *fs, struct vnode **ret)
-{
+int sfs_getroot(struct fs *fs, struct vnode **ret) {
 	struct sfs_fs *sfs = fs->fs_data;
 	struct sfs_vnode *sv;
 	int result;
@@ -299,16 +270,14 @@ sfs_getroot(struct fs *fs, struct vnode **ret)
 	vfs_biglock_acquire();
 
 	result = sfs_loadvnode(sfs, SFS_ROOTDIR_INO, SFS_TYPE_INVAL, &sv);
-	if (result) {
-		kprintf("sfs: %s: getroot: Cannot load root vnode\n",
-			sfs->sfs_sb.sb_volname);
+	if(result) {
+		kprintf("sfs: %s: getroot: Cannot load root vnode\n", sfs->sfs_sb.sb_volname);
 		vfs_biglock_release();
 		return result;
 	}
 
-	if (sv->sv_i.sfi_type != SFS_TYPE_DIR) {
-		kprintf("sfs: %s: getroot: not directory (type %u)\n",
-			sfs->sfs_sb.sb_volname, sv->sv_i.sfi_type);
+	if(sv->sv_i.sfi_type != SFS_TYPE_DIR) {
+		kprintf("sfs: %s: getroot: not directory (type %u)\n", sfs->sfs_sb.sb_volname, sv->sv_i.sfi_type);
 		vfs_biglock_release();
 		return EINVAL;
 	}

@@ -31,27 +31,24 @@
  * remove
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include <errno.h>
-#include <err.h>
 
 #include "config.h"
 #include "test.h"
 
-static
-void
-remove_dir(void)
-{
+static void remove_dir(void) {
 	int rv;
 
 	report_begin("remove() on a directory");
 
-	if (create_testdir() < 0) {
+	if(create_testdir() < 0) {
 		/*report_aborted();*/ /* XXX in create_testdir */
 		return;
 	}
@@ -61,10 +58,7 @@ remove_dir(void)
 	rmdir(TESTDIR);
 }
 
-static
-void
-remove_dot(void)
-{
+static void remove_dot(void) {
 	int rv;
 
 	report_begin("remove() on .");
@@ -72,10 +66,7 @@ remove_dot(void)
 	report_check2(rv, errno, EISDIR, EINVAL);
 }
 
-static
-void
-remove_dotdot(void)
-{
+static void remove_dotdot(void) {
 	int rv;
 
 	report_begin("remove() on ..");
@@ -83,10 +74,7 @@ remove_dotdot(void)
 	report_check2(rv, errno, EISDIR, EINVAL);
 }
 
-static
-void
-remove_empty(void)
-{
+static void remove_empty(void) {
 	int rv;
 
 	report_begin("remove() on empty string");
@@ -94,9 +82,7 @@ remove_empty(void)
 	report_check2(rv, errno, EISDIR, EINVAL);
 }
 
-void
-test_remove(void)
-{
+void test_remove(void) {
 	test_remove_path();
 
 	remove_dir();
