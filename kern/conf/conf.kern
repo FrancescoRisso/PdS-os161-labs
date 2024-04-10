@@ -443,5 +443,15 @@ file		test/fstest.c
 optfile net	test/nettest.c
 
 
+########################################
+#                                      #
+#              My config               #
+#                                      #
+########################################
+
+
 defoption	hello
 optfile		hello	main/hello.c
+
+defoption	syscall_write
+optfile		syscall_write	/syscall/write.c
