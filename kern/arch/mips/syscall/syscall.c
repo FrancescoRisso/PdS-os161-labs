@@ -36,6 +36,7 @@
 #include <syscall.h>
 #include <thread.h>
 
+#include "syscall-exit.h"
 #include "syscall-read.h"
 #include "syscall-write.h"
 
@@ -115,6 +116,13 @@ void syscall(struct trapframe *tf) {
 
 #if OPT_SYSCALL_READ
 		case SYS_read: err = syscall_read(tf->tf_a0, (userptr_t) tf->tf_a1, (size_t) tf->tf_a2); break;
+#endif
+
+#if OPT_SYSCALL_EXIT
+		case SYS__exit:
+			syscall_exit(tf->tf_a0);
+			err = tf->tf_a0;
+			break;
 #endif
 
 		default:

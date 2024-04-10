@@ -458,3 +458,6 @@ optfile		syscall_write	/syscall/write.c
 
 defoption	syscall_read
 optfile		syscall_read	/syscall/read.c
+
+defoption	syscall_exit
+optfile		syscall_exit	/syscall/exit.c
