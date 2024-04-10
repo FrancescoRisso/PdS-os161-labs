@@ -60,7 +60,7 @@
  */
 
 #ifdef __GNUC__
-register struct thread *curthread __asm("$23"); /* s7 register */
+register struct thread *curthread __asm("$23");	/* s7 register */
 #else
 #error "Don't know how to declare curthread in this compiler"
 #endif

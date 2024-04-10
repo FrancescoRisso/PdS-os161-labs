@@ -27,56 +27,63 @@
  * SUCH DAMAGE.
  */
 
-#include <errno.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <limits.h>
 
 /*
  * POSIX C function: exec a program on the search path. Tries
  * execv() repeatedly until one of the choices works.
  */
-int execvp(const char *prog, char *const *args) {
+int
+execvp(const char *prog, char *const *args)
+{
 	const char *searchpath, *s, *t;
 	char progpath[PATH_MAX];
 	size_t len;
 
-	if(strchr(prog, '/') != NULL) {
+	if (strchr(prog, '/') != NULL) {
 		execv(prog, args);
 		return -1;
 	}
 
 	searchpath = getenv("PATH");
-	if(searchpath == NULL) {
+	if (searchpath == NULL) {
 		errno = ENOENT;
 		return -1;
 	}
 
-	for(s = searchpath; s != NULL; s = t) {
+	for (s = searchpath; s != NULL; s = t) {
 		t = strchr(s, ':');
-		if(t != NULL) {
+		if (t != NULL) {
 			len = t - s;
 			/* advance past the colon */
 			t++;
-		} else {
+		}
+		else {
 			len = strlen(s);
 		}
-		if(len == 0) { continue; }
-		if(len >= sizeof(progpath)) { continue; }
+		if (len == 0) {
+			continue;
+		}
+		if (len >= sizeof(progpath)) {
+			continue;
+		}
 		memcpy(progpath, s, len);
 		snprintf(progpath + len, sizeof(progpath) - len, "/%s", prog);
 		execv(progpath, args);
-		switch(errno) {
-			case ENOENT:
-			case ENOTDIR:
-			case ENOEXEC:
-				/* routine errors, try next dir */
-				break;
-			default:
-				/* oops, let's fail */
-				return -1;
+		switch (errno) {
+		    case ENOENT:
+		    case ENOTDIR:
+		    case ENOEXEC:
+			/* routine errors, try next dir */
+			break;
+		    default:
+			/* oops, let's fail */
+			return -1;
 		}
 	}
 	errno = ENOENT;

@@ -40,7 +40,9 @@
 /*
  * Return a | b, in long long.
  */
-long long __iordi3(long long a, long long b) {
+long long
+__iordi3(long long a, long long b)
+{
 	union uu aa, bb;
 
 	aa.ll = a;

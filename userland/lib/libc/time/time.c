@@ -35,6 +35,8 @@
  * but also returns nanoseconds.
  */
 
-time_t time(time_t *t) {
+time_t
+time(time_t *t)
+{
 	return __time(t, NULL);
 }

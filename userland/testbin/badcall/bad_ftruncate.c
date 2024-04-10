@@ -31,25 +31,28 @@
  * ftruncate
  */
 
-#include <err.h>
-#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
+#include <err.h>
 
 #include "config.h"
 #include "test.h"
 
-static void ftruncate_fd_device(void) {
+static
+void
+ftruncate_fd_device(void)
+{
 	int rv, fd;
 
 	report_begin("ftruncate on device");
 
 	fd = open("null:", O_RDWR);
-	if(fd < 0) {
+	if (fd<0) {
 		report_warn("opening null: failed");
 		report_aborted();
 		return;
@@ -61,13 +64,16 @@ static void ftruncate_fd_device(void) {
 	close(fd);
 }
 
-static void ftruncate_size_neg(void) {
+static
+void
+ftruncate_size_neg(void)
+{
 	int rv, fd;
 
 	report_begin("ftruncate to negative size");
 
 	fd = open_testfile(NULL);
-	if(fd < 0) {
+	if (fd<0) {
 		report_aborted();
 		return;
 	}
@@ -79,7 +85,9 @@ static void ftruncate_size_neg(void) {
 	remove(TESTFILE);
 }
 
-void test_ftruncate(void) {
+void
+test_ftruncate(void)
+{
 	test_ftruncate_fd();
 
 	ftruncate_fd_device();

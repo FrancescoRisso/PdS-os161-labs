@@ -96,30 +96,32 @@
  */
 static long long __lmulq(unsigned int, unsigned int);
 
-long long __muldi3(long long a, long long b) {
+long long
+__muldi3(long long a, long long b)
+{
 	union uu u, v, low, prod;
 	unsigned int high, mid, udiff, vdiff;
 	int negall, negmid;
-#define u1 u.ui[H]
-#define u0 u.ui[L]
-#define v1 v.ui[H]
-#define v0 v.ui[L]
+#define	u1	u.ui[H]
+#define	u0	u.ui[L]
+#define	v1	v.ui[H]
+#define	v0	v.ui[L]
 
 	/*
 	 * Get u and v such that u, v >= 0.  When this is finished,
 	 * u1, u0, v1, and v0 will be directly accessible through the
 	 * int fields.
 	 */
-	if(a >= 0)
+	if (a >= 0)
 		u.ll = a, negall = 0;
 	else
 		u.ll = -a, negall = 1;
-	if(b >= 0)
+	if (b >= 0)
 		v.ll = b;
 	else
 		v.ll = -b, negall ^= 1;
 
-	if(u1 == 0 && v1 == 0) {
+	if (u1 == 0 && v1 == 0) {
 		/*
 		 * An (I hope) important optimization occurs when u1 and v1
 		 * are both 0.  This should be common since most numbers
@@ -135,11 +137,11 @@ long long __muldi3(long long a, long long b) {
 		 */
 		low.ll = __lmulq(u0, v0);
 
-		if(u1 >= u0)
+		if (u1 >= u0)
 			negmid = 0, udiff = u1 - u0;
 		else
 			negmid = 1, udiff = u0 - u1;
-		if(v0 >= v1)
+		if (v0 >= v1)
 			vdiff = v0 - v1;
 		else
 			vdiff = v1 - v0, negmid ^= 1;
@@ -150,7 +152,8 @@ long long __muldi3(long long a, long long b) {
 		/*
 		 * Assemble the final product.
 		 */
-		prod.ui[H] = high + (negmid ? -mid : mid) + low.ui[L] + low.ui[H];
+		prod.ui[H] = high + (negmid ? -mid : mid) + low.ui[L] +
+		    low.ui[H];
 		prod.ui[L] = low.ui[L];
 	}
 	return (negall ? -prod.ll : prod.ll);
@@ -177,7 +180,9 @@ long long __muldi3(long long a, long long b) {
  *
  * splits into high and low ints as HHALF(l) and LHUP(l) respectively.
  */
-static long long __lmulq(unsigned int u, unsigned int v) {
+static long long
+__lmulq(unsigned int u, unsigned int v)
+{
 	unsigned int u1, u0, v1, v0, udiff, vdiff, high, mid, low;
 	unsigned int prodh, prodl, was;
 	union uu prod;
@@ -191,13 +196,14 @@ static long long __lmulq(unsigned int u, unsigned int v) {
 	low = u0 * v0;
 
 	/* This is the same small-number optimization as before. */
-	if(u1 == 0 && v1 == 0) return (low);
+	if (u1 == 0 && v1 == 0)
+		return (low);
 
-	if(u1 >= u0)
+	if (u1 >= u0)
 		udiff = u1 - u0, neg = 0;
 	else
 		udiff = u0 - u1, neg = 1;
-	if(v0 >= v1)
+	if (v0 >= v1)
 		vdiff = v0 - v1;
 	else
 		vdiff = v1 - v0, neg ^= 1;
@@ -210,7 +216,7 @@ static long long __lmulq(unsigned int u, unsigned int v) {
 	prodl = LHUP(high);
 
 	/* if (neg) prod -= mid << N; else prod += mid << N; */
-	if(neg) {
+	if (neg) {
 		was = prodl;
 		prodl -= LHUP(mid);
 		prodh -= HHALF(mid) + (prodl > was);
@@ -225,7 +231,8 @@ static long long __lmulq(unsigned int u, unsigned int v) {
 	prodl += LHUP(low);
 	prodh += HHALF(low) + (prodl < was);
 	/* ... + low; */
-	if((prodl += low) < low) prodh++;
+	if ((prodl += low) < low)
+		prodh++;
 
 	/* return 4N-bit product */
 	prod.ui[H] = prodh;

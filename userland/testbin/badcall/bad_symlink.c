@@ -31,12 +31,15 @@
  * symlink
  */
 
-#include <errno.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "test.h"
 
-static void symlink_empty1(void) {
+static
+void
+symlink_empty1(void)
+{
 	int rv;
 
 	report_begin("symlink -> empty string");
@@ -45,7 +48,10 @@ static void symlink_empty1(void) {
 	remove(TESTLINK);
 }
 
-static void symlink_empty2(void) {
+static
+void
+symlink_empty2(void)
+{
 	int rv;
 
 	report_begin("symlink named empty string");
@@ -53,7 +59,9 @@ static void symlink_empty2(void) {
 	report_check(rv, errno, EINVAL);
 }
 
-void test_symlink(void) {
+void
+test_symlink(void)
+{
 	test_symlink_paths();
 	symlink_empty1();
 	symlink_empty2();

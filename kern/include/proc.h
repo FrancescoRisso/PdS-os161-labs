@@ -60,15 +60,15 @@ struct vnode;
  * without sleeping.
  */
 struct proc {
-	char *p_name;           /* Name of this process */
-	struct spinlock p_lock; /* Lock for this structure */
-	unsigned p_numthreads;  /* Number of threads in this process */
+	char *p_name;			/* Name of this process */
+	struct spinlock p_lock;		/* Lock for this structure */
+	unsigned p_numthreads;		/* Number of threads in this process */
 
 	/* VM */
-	struct addrspace *p_addrspace; /* virtual address space */
+	struct addrspace *p_addrspace;	/* virtual address space */
 
 	/* VFS */
-	struct vnode *p_cwd; /* current working directory */
+	struct vnode *p_cwd;		/* current working directory */
 
 	/* add more material here as needed */
 };

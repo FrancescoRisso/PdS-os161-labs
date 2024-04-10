@@ -27,16 +27,16 @@
  * SUCH DAMAGE.
  */
 
-#include <assert.h>
-#include <err.h>
-#include <errno.h>
-#include <stdarg.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
+#include <err.h>
+#include <assert.h>
 
 #include "config.h"
 #include "test.h"
@@ -58,7 +58,10 @@ static size_t outbufpos;
 /*
  * Print things.
  */
-static void vsay(const char *fmt, va_list ap) {
+static
+void
+vsay(const char *fmt, va_list ap)
+{
 	size_t begin, i;
 
 	assert(outbufpos < sizeof(outbuf));
@@ -67,16 +70,20 @@ static void vsay(const char *fmt, va_list ap) {
 	vsnprintf(outbuf + outbufpos, sizeof(outbuf) - outbufpos, fmt, ap);
 	outbufpos = strlen(outbuf);
 
-	for(i = begin; i < outbufpos; i++) {
-		if(outbuf[i] == '\n') {
+	for (i=begin; i<outbufpos; i++) {
+		if (outbuf[i] == '\n') {
 			horizpos = 0;
-		} else {
+		}
+		else {
 			horizpos++;
 		}
 	}
 }
 
-static void say(const char *fmt, ...) {
+static
+void
+say(const char *fmt, ...)
+{
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -87,8 +94,11 @@ static void say(const char *fmt, ...) {
 /*
  * Indent to a given horizontal position.
  */
-static void indent_to(size_t pos) {
-	while(horizpos < pos) {
+static
+void
+indent_to(size_t pos)
+{
+	while (horizpos < pos) {
 		assert(outbufpos < sizeof(outbuf) - 1);
 		outbuf[outbufpos++] = ' ';
 		outbuf[outbufpos] = 0;
@@ -99,7 +109,10 @@ static void indent_to(size_t pos) {
 /*
  * Flush the output.
  */
-static void flush(void) {
+static
+void
+flush(void)
+{
 	write(STDOUT_FILENO, outbuf, outbufpos);
 	outbufpos = 0;
 }
@@ -110,7 +123,9 @@ static void flush(void) {
  * Begin a test. This flushes the description so it can be seen before
  * the test happens, in case the test explodes or deadlocks the system.
  */
-void report_begin(const char *descfmt, ...) {
+void
+report_begin(const char *descfmt, ...)
+{
 	va_list ap;
 
 	say("badcall: ");
@@ -124,7 +139,9 @@ void report_begin(const char *descfmt, ...) {
 /*
  * Prepare to be able to print subreports.
  */
-void report_hassubs(void) {
+void
+report_hassubs(void)
+{
 	subpos = horizpos;
 	say("\n");
 	flush();
@@ -135,7 +152,9 @@ void report_hassubs(void) {
  * subreports are in subprocesses and we want each one to print a
  * whole line at once to avoid output interleaving.
  */
-void report_beginsub(const char *descfmt, ...) {
+void
+report_beginsub(const char *descfmt, ...)
+{
 	va_list ap;
 
 	assert(horizpos == 0);
@@ -151,7 +170,9 @@ void report_beginsub(const char *descfmt, ...) {
  * extra line for the warning. The warnx form is the same but doesn't
  * add errno.
  */
-void report_warn(const char *fmt, ...) {
+void
+report_warn(const char *fmt, ...)
+{
 	size_t pos;
 	const char *errmsg;
 	va_list ap;
@@ -167,7 +188,9 @@ void report_warn(const char *fmt, ...) {
 	flush();
 }
 
-void report_warnx(const char *fmt, ...) {
+void
+report_warnx(const char *fmt, ...)
+{
 	size_t pos;
 	va_list ap;
 
@@ -184,10 +207,13 @@ void report_warnx(const char *fmt, ...) {
 /*
  * Report a system call result.
  */
-void report_result(int rv, int error) {
-	if(rv == -1) {
+void
+report_result(int rv, int error)
+{
+	if (rv == -1) {
 		say("%s ", strerror(error));
-	} else {
+	}
+	else {
 		say("Success ");
 	}
 }
@@ -201,7 +227,9 @@ void report_result(int rv, int error) {
  *
  * XXX this is pretty gross.
  */
-void report_saw_enosys(void) {
+void
+report_saw_enosys(void)
+{
 	size_t pos = horizpos;
 
 	horizpos = 0;
@@ -213,25 +241,36 @@ void report_saw_enosys(void) {
  * in the result column, and add the final newline.
  */
 
-static void report_end(const char *msg) {
+static
+void
+report_end(const char *msg)
+{
 	indent_to(RESULT_COLUMN);
 	say("%s\n", msg);
 	flush();
 }
 
-void report_passed(void) {
+void
+report_passed(void)
+{
 	report_end("passed");
 }
 
-void report_failure(void) {
+void
+report_failure(void)
+{
 	report_end("FAILURE");
 }
 
-void report_skipped(void) {
+void
+report_skipped(void)
+{
 	report_end("------");
 }
 
-void report_aborted(void) {
+void
+report_aborted(void)
+{
 	report_end("ABORTED");
 }
 
@@ -243,44 +282,55 @@ void report_aborted(void) {
  * matches one or more expected results.
  */
 
-void report_survival(int rv, int error) {
+void
+report_survival(int rv, int error)
+{
 	/* allow any error as long as we survive */
 	report_result(rv, error);
 	report_passed();
 }
 
-static void report_checkN(int rv, int error, int *right_errors, int right_num) {
+static
+void
+report_checkN(int rv, int error, int *right_errors, int right_num)
+{
 	int i, goterror;
 
-	if(rv == -1) {
+	if (rv==-1) {
 		goterror = error;
-	} else {
+	}
+	else {
 		goterror = 0;
 	}
 
-	for(i = 0; i < right_num; i++) {
-		if(goterror == right_errors[i]) {
+	for (i=0; i<right_num; i++) {
+		if (goterror == right_errors[i]) {
 			report_result(rv, error);
 			report_passed();
 			return;
 		}
 	}
 
-	if(goterror == ENOSYS) {
+	if (goterror == ENOSYS) {
 		report_saw_enosys();
 		say("(unimplemented) ");
 		report_skipped();
-	} else {
+	}
+	else {
 		report_result(rv, error);
 		report_failure();
 	}
 }
 
-void report_check(int rv, int error, int right_error) {
+void
+report_check(int rv, int error, int right_error)
+{
 	report_checkN(rv, error, &right_error, 1);
 }
 
-void report_check2(int rv, int error, int okerr1, int okerr2) {
+void
+report_check2(int rv, int error, int okerr1, int okerr2)
+{
 	int ok[2];
 
 	ok[0] = okerr1;
@@ -288,7 +338,9 @@ void report_check2(int rv, int error, int okerr1, int okerr2) {
 	report_checkN(rv, error, ok, 2);
 }
 
-void report_check3(int rv, int error, int okerr1, int okerr2, int okerr3) {
+void
+report_check3(int rv, int error, int okerr1, int okerr2, int okerr3)
+{
 	int ok[3];
 
 	ok[0] = okerr1;

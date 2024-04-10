@@ -31,19 +31,22 @@
  * mkdir
  */
 
-#include <err.h>
-#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
+#include <err.h>
 
 #include "config.h"
 #include "test.h"
 
-static void mkdir_dot(void) {
+static
+void
+mkdir_dot(void)
+{
 	int rv;
 
 	report_begin("mkdir .");
@@ -51,7 +54,10 @@ static void mkdir_dot(void) {
 	report_check(rv, errno, EEXIST);
 }
 
-static void mkdir_dotdot(void) {
+static
+void
+mkdir_dotdot(void)
+{
 	int rv;
 
 	report_begin("mkdir ..");
@@ -59,7 +65,10 @@ static void mkdir_dotdot(void) {
 	report_check(rv, errno, EEXIST);
 }
 
-static void mkdir_empty(void) {
+static
+void
+mkdir_empty(void)
+{
 	int rv;
 
 	report_begin("mkdir of empty string");
@@ -67,7 +76,9 @@ static void mkdir_empty(void) {
 	report_check(rv, errno, EINVAL);
 }
 
-void test_mkdir(void) {
+void
+test_mkdir(void)
+{
 	test_mkdir_path();
 
 	mkdir_dot();

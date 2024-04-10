@@ -37,7 +37,7 @@
 typedef unsigned spinlock_data_t;
 
 /* Initializer for use by SPINLOCK_INITIALIZER */
-#define SPINLOCK_DATA_INITIALIZER 0
+#define SPINLOCK_DATA_INITIALIZER	0
 
 /* Atomic operations on spinlock_data_t */
 SPINLOCK_INLINE
@@ -55,7 +55,9 @@ spinlock_data_t spinlock_data_testandset(volatile spinlock_data_t *sd);
  * memory.
  */
 SPINLOCK_INLINE
-void spinlock_data_set(volatile spinlock_data_t *sd, unsigned val) {
+void
+spinlock_data_set(volatile spinlock_data_t *sd, unsigned val)
+{
 	*sd = val;
 }
 
@@ -64,7 +66,9 @@ void spinlock_data_set(volatile spinlock_data_t *sd, unsigned val) {
  * instruction, and instructions are atomic with respect to memory.
  */
 SPINLOCK_INLINE
-spinlock_data_t spinlock_data_get(volatile spinlock_data_t *sd) {
+spinlock_data_t
+spinlock_data_get(volatile spinlock_data_t *sd)
+{
 	return *sd;
 }
 
@@ -82,7 +86,9 @@ spinlock_data_t spinlock_data_get(volatile spinlock_data_t *sd) {
  * to atomically update one machine word.
  */
 SPINLOCK_INLINE
-spinlock_data_t spinlock_data_testandset(volatile spinlock_data_t *sd) {
+spinlock_data_t
+spinlock_data_testandset(volatile spinlock_data_t *sd)
+{
 	spinlock_data_t x;
 	spinlock_data_t y;
 
@@ -99,15 +105,16 @@ spinlock_data_t spinlock_data_testandset(volatile spinlock_data_t *sd) {
 
 	y = 1;
 	__asm volatile(
-		".set push;"     /* save assembler mode */
-		".set mips32;"   /* allow MIPS32 instructions */
-		".set volatile;" /* avoid unwanted optimization */
-		"ll %0, 0(%2);"  /*   x = *sd */
-		"sc %1, 0(%2);"  /*   *sd = y; y = success? */
-		".set pop"       /* restore assembler mode */
-		: "=&r"(x), "+r"(y)
-		: "r"(sd));
-	if(y == 0) { return 1; }
+		".set push;"		/* save assembler mode */
+		".set mips32;"		/* allow MIPS32 instructions */
+		".set volatile;"	/* avoid unwanted optimization */
+		"ll %0, 0(%2);"		/*   x = *sd */
+		"sc %1, 0(%2);"		/*   *sd = y; y = success? */
+		".set pop"		/* restore assembler mode */
+		: "=&r" (x), "+r" (y) : "r" (sd));
+	if (y == 0) {
+		return 1;
+	}
 	return x;
 }
 

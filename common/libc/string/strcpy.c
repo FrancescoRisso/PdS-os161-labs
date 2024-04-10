@@ -33,8 +33,8 @@
  */
 
 #ifdef _KERNEL
-#include <lib.h>
 #include <types.h>
+#include <lib.h>
 #else
 #include <string.h>
 #endif
@@ -42,13 +42,17 @@
 /*
  * Standard C string function: copy one string to another.
  */
-char *strcpy(char *dest, const char *src) {
+char *
+strcpy(char *dest, const char *src)
+{
 	size_t i;
 
 	/*
 	 * Copy characters until we hit the null terminator.
 	 */
-	for(i = 0; src[i]; i++) { dest[i] = src[i]; }
+	for (i=0; src[i]; i++) {
+		dest[i] = src[i];
+	}
 
 	/*
 	 * Add null terminator to result.

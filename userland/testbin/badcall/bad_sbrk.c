@@ -31,14 +31,14 @@
  * sbrk
  */
 
-#include <err.h>
-#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
+#include <err.h>
 
 #include "config.h"
 #include "test.h"
@@ -46,14 +46,22 @@
 /*
  * typing wrapper around sbrk
  */
-static int try_sbrk(long val) {
+static
+int
+try_sbrk(long val)
+{
 	void *rv;
 	rv = sbrk(val);
-	if(rv == (void *) -1) { return -1; }
+	if (rv==(void *)-1) {
+		return -1;
+	}
 	return 0;
 }
 
-static void enforce_sbrk(long val, const char *desc, int err) {
+static
+void
+enforce_sbrk(long val, const char *desc, int err)
+{
 	int result;
 
 	report_begin("sbrk %s", desc);
@@ -62,19 +70,31 @@ static void enforce_sbrk(long val, const char *desc, int err) {
 	report_check(result, errno, err);
 }
 
-static void sbrk_bigpos(void) {
-	enforce_sbrk(4096 * 1024 * 256, "huge positive", ENOMEM);
+static
+void
+sbrk_bigpos(void)
+{
+	enforce_sbrk(4096*1024*256, "huge positive", ENOMEM);
 }
 
-static void sbrk_bigneg(void) {
-	enforce_sbrk(-4096 * 1024 * 256, "huge negative", EINVAL);
+static
+void
+sbrk_bigneg(void)
+{
+	enforce_sbrk(-4096*1024*256, "huge negative", EINVAL);
 }
 
-static void sbrk_neg(void) {
+static
+void
+sbrk_neg(void)
+{
 	enforce_sbrk(-8192, "too-large negative", EINVAL);
 }
 
-static void sbrk_unalignedpos(void) {
+static
+void
+sbrk_unalignedpos(void)
+{
 	int result;
 
 	report_begin("sbrk unaligned positive");
@@ -82,7 +102,10 @@ static void sbrk_unalignedpos(void) {
 	report_check2(result, errno, 0, EINVAL);
 }
 
-static void sbrk_unalignedneg(void) {
+static
+void
+sbrk_unalignedneg(void)
+{
 	int result;
 
 	report_begin("sbrk unaligned negative");
@@ -90,10 +113,13 @@ static void sbrk_unalignedneg(void) {
 	report_check2(result, errno, 0, EINVAL);
 }
 
-void test_sbrk(void) {
+void
+test_sbrk(void)
+{
 	sbrk_neg();
 	sbrk_bigpos();
 	sbrk_bigneg();
 	sbrk_unalignedpos();
 	sbrk_unalignedneg();
 }
+

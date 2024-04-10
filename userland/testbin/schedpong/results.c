@@ -28,13 +28,13 @@
  * SUCH DAMAGE.
  */
 
-#include "results.h"
-
-#include <assert.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <assert.h>
+
+#include "results.h"
 
 #define RESULTSFILE "endtimes"
 
@@ -44,23 +44,33 @@ static int resultsfile = -1;
  * Create the file that the timing results are written to.
  * This is done first, in the main process.
  */
-void createresultsfile(void) {
+void
+createresultsfile(void)
+{
 	int fd;
 
 	assert(resultsfile == -1);
 
-	fd = open(RESULTSFILE, O_RDWR | O_CREAT | O_TRUNC, 0664);
-	if(fd < 0) { err(1, "%s", RESULTSFILE); }
-	if(close(fd) == -1) { warn("%s: close", RESULTSFILE); }
+	fd = open(RESULTSFILE, O_RDWR|O_CREAT|O_TRUNC, 0664);
+	if (fd < 0) {
+		err(1, "%s", RESULTSFILE);
+	}
+	if (close(fd) == -1) {
+		warn("%s: close", RESULTSFILE);
+	}
 }
 
 /*
  * Remove the timing results file.
  * This is done last, in the main process.
  */
-void destroyresultsfile(void) {
-	if(remove(RESULTSFILE) == -1) {
-		if(errno != ENOSYS) { warn("%s: remove", RESULTSFILE); }
+void
+destroyresultsfile(void)
+{
+	if (remove(RESULTSFILE) == -1) {
+		if (errno != ENOSYS) {
+			warn("%s: remove", RESULTSFILE);
+		}
 	}
 }
 
@@ -70,58 +80,90 @@ void destroyresultsfile(void) {
  * then require extra semaphoring to coordinate...) and afterwards
  * done for reading in the main process.
  */
-void openresultsfile(int openflags) {
+void
+openresultsfile(int openflags)
+{
 	assert(openflags == O_RDONLY || openflags == O_WRONLY);
 	assert(resultsfile == -1);
 
 	resultsfile = open(RESULTSFILE, openflags, 0);
-	if(resultsfile < 0) { err(1, "%s", RESULTSFILE); }
+	if (resultsfile < 0) {
+		err(1, "%s", RESULTSFILE);
+	}
 }
 
 /*
  * Close the timing results file.
  */
-void closeresultsfile(void) {
+void
+closeresultsfile(void)
+{
 	assert(resultsfile >= 0);
 
-	if(close(resultsfile) == -1) { warn("%s: close", RESULTSFILE); }
+	if (close(resultsfile) == -1) {
+		warn("%s: close", RESULTSFILE);
+	}
 	resultsfile = -1;
 }
 
 /*
  * Write a result into the timing results file.
  */
-void putresult(unsigned groupid, time_t secs, unsigned long nsecs) {
+void
+putresult(unsigned groupid, time_t secs, unsigned long nsecs)
+{
 	off_t pos;
 	ssize_t r;
 
 	assert(resultsfile >= 0);
 
 	pos = groupid * (sizeof(secs) + sizeof(nsecs));
-	if(lseek(resultsfile, pos, SEEK_SET) == -1) { err(1, "%s: lseek", RESULTSFILE); }
+	if (lseek(resultsfile, pos, SEEK_SET) == -1) {
+		err(1, "%s: lseek", RESULTSFILE);
+	}
 	r = write(resultsfile, &secs, sizeof(secs));
-	if(r < 0) { err(1, "%s: write (seconds)", RESULTSFILE); }
-	if((size_t) r < sizeof(secs)) { errx(1, "%s: write (seconds): Short write", RESULTSFILE); }
+	if (r < 0) {
+		err(1, "%s: write (seconds)", RESULTSFILE);
+	}
+	if ((size_t)r < sizeof(secs)) {
+		errx(1, "%s: write (seconds): Short write", RESULTSFILE);
+	}
 	r = write(resultsfile, &nsecs, sizeof(nsecs));
-	if(r < 0) { err(1, "%s: write (nsecs)", RESULTSFILE); }
-	if((size_t) r < sizeof(nsecs)) { errx(1, "%s: write (nsecs): Short write", RESULTSFILE); }
+	if (r < 0) {
+		err(1, "%s: write (nsecs)", RESULTSFILE);
+	}
+	if ((size_t)r < sizeof(nsecs)) {
+		errx(1, "%s: write (nsecs): Short write", RESULTSFILE);
+	}
 }
 
 /*
  * Read a result from the timing results file.
  */
-void getresult(unsigned groupid, time_t *secs, unsigned long *nsecs) {
+void
+getresult(unsigned groupid, time_t *secs, unsigned long *nsecs)
+{
 	off_t pos;
 	ssize_t r;
 
 	assert(resultsfile >= 0);
 
 	pos = groupid * (sizeof(*secs) + sizeof(*nsecs));
-	if(lseek(resultsfile, pos, SEEK_SET) == -1) { err(1, "%s: lseek", RESULTSFILE); }
+	if (lseek(resultsfile, pos, SEEK_SET) == -1) {
+		err(1, "%s: lseek", RESULTSFILE);
+	}
 	r = read(resultsfile, secs, sizeof(*secs));
-	if(r < 0) { err(1, "%s: read (seconds)", RESULTSFILE); }
-	if((size_t) r < sizeof(*secs)) { errx(1, "%s: read (seconds): Unexpected EOF", RESULTSFILE); }
+	if (r < 0) {
+		err(1, "%s: read (seconds)", RESULTSFILE);
+	}
+	if ((size_t)r < sizeof(*secs)) {
+		errx(1, "%s: read (seconds): Unexpected EOF", RESULTSFILE);
+	}
 	r = read(resultsfile, nsecs, sizeof(*nsecs));
-	if(r < 0) { err(1, "%s: read (nsecs)", RESULTSFILE); }
-	if((size_t) r < sizeof(*nsecs)) { errx(1, "%s: read (nsecs): Unexpected EOF", RESULTSFILE); }
+	if (r < 0) {
+		err(1, "%s: read (nsecs)", RESULTSFILE);
+	}
+	if ((size_t)r < sizeof(*nsecs)) {
+		errx(1, "%s: read (nsecs): Unexpected EOF", RESULTSFILE);
+	}
 }

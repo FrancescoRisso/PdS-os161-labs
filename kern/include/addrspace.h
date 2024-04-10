@@ -36,7 +36,6 @@
 
 
 #include <vm.h>
-
 #include "opt-dumbvm.h"
 
 struct vnode;
@@ -51,15 +50,15 @@ struct vnode;
 
 struct addrspace {
 #if OPT_DUMBVM
-	vaddr_t as_vbase1;
-	paddr_t as_pbase1;
-	size_t as_npages1;
-	vaddr_t as_vbase2;
-	paddr_t as_pbase2;
-	size_t as_npages2;
-	paddr_t as_stackpbase;
+        vaddr_t as_vbase1;
+        paddr_t as_pbase1;
+        size_t as_npages1;
+        vaddr_t as_vbase2;
+        paddr_t as_pbase2;
+        size_t as_npages2;
+        paddr_t as_stackpbase;
 #else
-	/* Put stuff here for your VM system */
+        /* Put stuff here for your VM system */
 #endif
 };
 
@@ -105,15 +104,19 @@ struct addrspace {
  */
 
 struct addrspace *as_create(void);
-int as_copy(struct addrspace *src, struct addrspace **ret);
-void as_activate(void);
-void as_deactivate(void);
-void as_destroy(struct addrspace *);
+int               as_copy(struct addrspace *src, struct addrspace **ret);
+void              as_activate(void);
+void              as_deactivate(void);
+void              as_destroy(struct addrspace *);
 
-int as_define_region(struct addrspace *as, vaddr_t vaddr, size_t sz, int readable, int writeable, int executable);
-int as_prepare_load(struct addrspace *as);
-int as_complete_load(struct addrspace *as);
-int as_define_stack(struct addrspace *as, vaddr_t *initstackptr);
+int               as_define_region(struct addrspace *as,
+                                   vaddr_t vaddr, size_t sz,
+                                   int readable,
+                                   int writeable,
+                                   int executable);
+int               as_prepare_load(struct addrspace *as);
+int               as_complete_load(struct addrspace *as);
+int               as_define_stack(struct addrspace *as, vaddr_t *initstackptr);
 
 
 /*

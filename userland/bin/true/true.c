@@ -27,14 +27,16 @@
  * SUCH DAMAGE.
  */
 
-#include <stdlib.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 /*
  * true - succeed.
  */
 
-int main(void) {
+int
+main(void)
+{
 	/* Just exit with success. */
 	exit(0);
 }

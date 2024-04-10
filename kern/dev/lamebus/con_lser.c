@@ -32,18 +32,21 @@
  * serial device.
  */
 
+#include <types.h>
+#include <lib.h>
 #include <generic/console.h>
 #include <lamebus/lser.h>
-#include <lib.h>
-#include <types.h>
-
 #include "autoconf.h"
 
-struct con_softc *attach_con_to_lser(int consno, struct lser_softc *ls) {
+struct con_softc *
+attach_con_to_lser(int consno, struct lser_softc *ls)
+{
 	struct con_softc *cs = kmalloc(sizeof(struct con_softc));
-	if(cs == NULL) { return NULL; }
+	if (cs==NULL) {
+		return NULL;
+	}
 
-	(void) consno;  // unused
+	(void)consno;  // unused
 
 	cs->cs_devdata = ls;
 	cs->cs_send = lser_write;
@@ -55,3 +58,4 @@ struct con_softc *attach_con_to_lser(int consno, struct lser_softc *ls) {
 
 	return cs;
 }
+

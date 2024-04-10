@@ -38,16 +38,18 @@
 
 #include <stdio.h>
 
-#define REALLY_BIG_ADDRESS 0x40000000
+#define REALLY_BIG_ADDRESS	0x40000000
 
-int main(void) {
+int
+main(void)
+{
 	volatile int i;
 
 	printf("\nEntering the faulter program - I should die immediately\n");
-	i = *(int *) REALLY_BIG_ADDRESS;
+	i = *(int *)REALLY_BIG_ADDRESS;
 
 	// gcc 4.8 improperly demands this
-	(void) i;
+	(void)i;
 
 	printf("I didn't get killed!  Program has a bug\n");
 	return 0;

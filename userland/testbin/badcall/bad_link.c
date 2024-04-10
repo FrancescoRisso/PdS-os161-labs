@@ -31,24 +31,30 @@
  * link
  */
 
-#include <errno.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "test.h"
 
-static void link_dir(void) {
+static
+void
+link_dir(void)
+{
 	int rv;
 
 	report_begin("hard link of .");
 	rv = link(".", TESTDIR);
 	report_check(rv, errno, EINVAL);
-	if(rv == 0) {
+	if (rv==0) {
 		/* this might help recover... maybe */
 		remove(TESTDIR);
 	}
 }
 
-static void link_empty1(void) {
+static
+void
+link_empty1(void)
+{
 	int rv;
 
 	report_begin("hard link of empty string");
@@ -56,11 +62,14 @@ static void link_empty1(void) {
 	report_check(rv, errno, EINVAL);
 }
 
-static void link_empty2(void) {
+static
+void
+link_empty2(void)
+{
 	int rv;
 
 	report_begin("hard link to empty string");
-	if(create_testdir() < 0) {
+	if (create_testdir()<0) {
 		/*report_aborted();*/ /* XXX in create_testdir */
 		return;
 	}
@@ -69,7 +78,9 @@ static void link_empty2(void) {
 	rmdir(TESTDIR);
 }
 
-void test_link(void) {
+void
+test_link(void)
+{
 	test_link_paths();
 	link_dir();
 	link_empty1();

@@ -30,30 +30,40 @@
 /*
  * Thread test code.
  */
+#include <types.h>
 #include <lib.h>
+#include <thread.h>
 #include <synch.h>
 #include <test.h>
-#include <thread.h>
-#include <types.h>
 
-#define NTHREADS 8
+#define NTHREADS  8
 
 static struct semaphore *tsem = NULL;
 
-static void init_sem(void) {
-	if(tsem == NULL) {
+static
+void
+init_sem(void)
+{
+	if (tsem==NULL) {
 		tsem = sem_create("tsem", 0);
-		if(tsem == NULL) { panic("threadtest: sem_create failed\n"); }
+		if (tsem == NULL) {
+			panic("threadtest: sem_create failed\n");
+		}
 	}
 }
 
-static void loudthread(void *junk, unsigned long num) {
+static
+void
+loudthread(void *junk, unsigned long num)
+{
 	int ch = '0' + num;
 	int i;
 
-	(void) junk;
+	(void)junk;
 
-	for(i = 0; i < 120; i++) { putch(ch); }
+	for (i=0; i<120; i++) {
+		putch(ch);
+	}
 	V(tsem);
 }
 
@@ -67,37 +77,51 @@ static void loudthread(void *junk, unsigned long num) {
  * The delay loop is supposed to be long enough that it should be clear
  * if either timeslicing or the scheduler is not working right.
  */
-static void quietthread(void *junk, unsigned long num) {
+static
+void
+quietthread(void *junk, unsigned long num)
+{
 	int ch = '0' + num;
 	volatile int i;
 
-	(void) junk;
+	(void)junk;
 
 	putch(ch);
-	for(i = 0; i < 200000; i++)
-		;
+	for (i=0; i<200000; i++);
 	putch(ch);
 
 	V(tsem);
 }
 
-static void runthreads(int doloud) {
+static
+void
+runthreads(int doloud)
+{
 	char name[16];
 	int i, result;
 
-	for(i = 0; i < NTHREADS; i++) {
+	for (i=0; i<NTHREADS; i++) {
 		snprintf(name, sizeof(name), "threadtest%d", i);
-		result = thread_fork(name, NULL, doloud ? loudthread : quietthread, NULL, i);
-		if(result) { panic("threadtest: thread_fork failed %s)\n", strerror(result)); }
+		result = thread_fork(name, NULL,
+				     doloud ? loudthread : quietthread,
+				     NULL, i);
+		if (result) {
+			panic("threadtest: thread_fork failed %s)\n",
+			      strerror(result));
+		}
 	}
 
-	for(i = 0; i < NTHREADS; i++) { P(tsem); }
+	for (i=0; i<NTHREADS; i++) {
+		P(tsem);
+	}
 }
 
 
-int threadtest(int nargs, char **args) {
-	(void) nargs;
-	(void) args;
+int
+threadtest(int nargs, char **args)
+{
+	(void)nargs;
+	(void)args;
 
 	init_sem();
 	kprintf("Starting thread test...\n");
@@ -107,9 +131,11 @@ int threadtest(int nargs, char **args) {
 	return 0;
 }
 
-int threadtest2(int nargs, char **args) {
-	(void) nargs;
-	(void) args;
+int
+threadtest2(int nargs, char **args)
+{
+	(void)nargs;
+	(void)args;
 
 	init_sem();
 	kprintf("Starting thread test 2...\n");

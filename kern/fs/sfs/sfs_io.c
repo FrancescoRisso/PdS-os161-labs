@@ -32,14 +32,13 @@
  *
  * I/O plumbing.
  */
-#include <device.h>
+#include <types.h>
 #include <kern/errno.h>
 #include <lib.h>
-#include <sfs.h>
-#include <types.h>
 #include <uio.h>
 #include <vfs.h>
-
+#include <device.h>
+#include <sfs.h>
 #include "sfsprivate.h"
 
 ////////////////////////////////////////////////////////////
@@ -56,37 +55,47 @@
 /*
  * Read or write a block, retrying I/O errors.
  */
-static int sfs_rwblock(struct sfs_fs *sfs, struct uio *uio) {
+static
+int
+sfs_rwblock(struct sfs_fs *sfs, struct uio *uio)
+{
 	int result;
-	int tries = 0;
+	int tries=0;
 
 	KASSERT(vfs_biglock_do_i_hold());
 
-	DEBUG(DB_SFS, "sfs: %s %llu\n", uio->uio_rw == UIO_READ ? "read" : "write", uio->uio_offset / SFS_BLOCKSIZE);
+	DEBUG(DB_SFS, "sfs: %s %llu\n",
+	      uio->uio_rw == UIO_READ ? "read" : "write",
+	      uio->uio_offset / SFS_BLOCKSIZE);
 
-retry:
+ retry:
 	result = DEVOP_IO(sfs->sfs_device, uio);
-	if(result == EINVAL) {
+	if (result == EINVAL) {
 		/*
 		 * This means the sector we requested was out of range,
 		 * or the seek address we gave wasn't sector-aligned,
 		 * or a couple of other things that are our fault.
 		 */
-		panic("sfs: %s: DEVOP_IO returned EINVAL\n", sfs->sfs_sb.sb_volname);
+		panic("sfs: %s: DEVOP_IO returned EINVAL\n",
+		      sfs->sfs_sb.sb_volname);
 	}
-	if(result == EIO) {
-		if(tries == 0) {
+	if (result == EIO) {
+		if (tries == 0) {
 			tries++;
-			kprintf("sfs: %s: block %llu I/O error, retrying\n", sfs->sfs_sb.sb_volname, uio->uio_offset / SFS_BLOCKSIZE);
+			kprintf("sfs: %s: block %llu I/O error, retrying\n",
+				sfs->sfs_sb.sb_volname,
+				uio->uio_offset / SFS_BLOCKSIZE);
 			goto retry;
-		} else if(tries < 10) {
+		}
+		else if (tries < 10) {
 			tries++;
 			goto retry;
-		} else {
-			kprintf(
-				"sfs: %s: block %llu I/O error, giving up "
+		}
+		else {
+			kprintf("sfs: %s: block %llu I/O error, giving up "
 				"after %d retries\n",
-				sfs->sfs_sb.sb_volname, uio->uio_offset / SFS_BLOCKSIZE, tries);
+				sfs->sfs_sb.sb_volname,
+				uio->uio_offset / SFS_BLOCKSIZE, tries);
 		}
 	}
 	return result;
@@ -95,7 +104,9 @@ retry:
 /*
  * Read a block.
  */
-int sfs_readblock(struct sfs_fs *sfs, daddr_t block, void *data, size_t len) {
+int
+sfs_readblock(struct sfs_fs *sfs, daddr_t block, void *data, size_t len)
+{
 	struct iovec iov;
 	struct uio ku;
 
@@ -108,7 +119,9 @@ int sfs_readblock(struct sfs_fs *sfs, daddr_t block, void *data, size_t len) {
 /*
  * Write a block.
  */
-int sfs_writeblock(struct sfs_fs *sfs, daddr_t block, void *data, size_t len) {
+int
+sfs_writeblock(struct sfs_fs *sfs, daddr_t block, void *data, size_t len)
+{
 	struct iovec iov;
 	struct uio ku;
 
@@ -132,7 +145,11 @@ int sfs_writeblock(struct sfs_fs *sfs, daddr_t block, void *data, size_t len) {
  * the sector; LEN is the number of bytes to actually read or write.
  * UIO is the area to do the I/O into.
  */
-static int sfs_partialio(struct sfs_vnode *sv, struct uio *uio, uint32_t skipstart, uint32_t len) {
+static
+int
+sfs_partialio(struct sfs_vnode *sv, struct uio *uio,
+	      uint32_t skipstart, uint32_t len)
+{
 	/*
 	 * I/O buffer for handling partial sectors.
 	 *
@@ -148,7 +165,7 @@ static int sfs_partialio(struct sfs_vnode *sv, struct uio *uio, uint32_t skipsta
 	int result;
 
 	/* Allocate missing blocks if and only if we're writing */
-	bool doalloc = (uio->uio_rw == UIO_WRITE);
+	bool doalloc = (uio->uio_rw==UIO_WRITE);
 
 	KASSERT(skipstart + len <= SFS_BLOCKSIZE);
 
@@ -160,35 +177,44 @@ static int sfs_partialio(struct sfs_vnode *sv, struct uio *uio, uint32_t skipsta
 
 	/* Get the disk block number */
 	result = sfs_bmap(sv, fileblock, doalloc, &diskblock);
-	if(result) { return result; }
+	if (result) {
+		return result;
+	}
 
-	if(diskblock == 0) {
+	if (diskblock == 0) {
 		/*
 		 * There was no block mapped at this point in the file.
 		 * Zero the buffer.
 		 */
 		KASSERT(uio->uio_rw == UIO_READ);
 		bzero(iobuf, sizeof(iobuf));
-	} else {
+	}
+	else {
 		/*
 		 * Read the block.
 		 */
 		result = sfs_readblock(sfs, diskblock, iobuf, sizeof(iobuf));
-		if(result) { return result; }
+		if (result) {
+			return result;
+		}
 	}
 
 	/*
 	 * Now perform the requested operation into/out of the buffer.
 	 */
-	result = uiomove(iobuf + skipstart, len, uio);
-	if(result) { return result; }
+	result = uiomove(iobuf+skipstart, len, uio);
+	if (result) {
+		return result;
+	}
 
 	/*
 	 * If it was a write, write back the modified block.
 	 */
-	if(uio->uio_rw == UIO_WRITE) {
+	if (uio->uio_rw == UIO_WRITE) {
 		result = sfs_writeblock(sfs, diskblock, iobuf, sizeof(iobuf));
-		if(result) { return result; }
+		if (result) {
+			return result;
+		}
 	}
 
 	return 0;
@@ -197,12 +223,15 @@ static int sfs_partialio(struct sfs_vnode *sv, struct uio *uio, uint32_t skipsta
 /*
  * Do I/O (either read or write) of a single whole block.
  */
-static int sfs_blockio(struct sfs_vnode *sv, struct uio *uio) {
+static
+int
+sfs_blockio(struct sfs_vnode *sv, struct uio *uio)
+{
 	struct sfs_fs *sfs = sv->sv_absvn.vn_fs->fs_data;
 	daddr_t diskblock;
 	uint32_t fileblock;
 	int result;
-	bool doalloc = (uio->uio_rw == UIO_WRITE);
+	bool doalloc = (uio->uio_rw==UIO_WRITE);
 	off_t saveoff;
 	off_t diskoff;
 	off_t saveres;
@@ -213,9 +242,11 @@ static int sfs_blockio(struct sfs_vnode *sv, struct uio *uio) {
 
 	/* Look up the disk block number */
 	result = sfs_bmap(sv, fileblock, doalloc, &diskblock);
-	if(result) { return result; }
+	if (result) {
+		return result;
+	}
 
-	if(diskblock == 0) {
+	if (diskblock == 0) {
 		/*
 		 * No block - fill with zeros.
 		 *
@@ -257,7 +288,9 @@ static int sfs_blockio(struct sfs_vnode *sv, struct uio *uio) {
 /*
  * Do I/O of a whole region of data, whether or not it's block-aligned.
  */
-int sfs_io(struct sfs_vnode *sv, struct uio *uio) {
+int
+sfs_io(struct sfs_vnode *sv, struct uio *uio)
+{
 	uint32_t blkoff;
 	uint32_t nblocks, i;
 	int result = 0;
@@ -270,16 +303,16 @@ int sfs_io(struct sfs_vnode *sv, struct uio *uio) {
 	 * remember how much extra there was in EXTRARESID so we can
 	 * add it back to uio_resid at the end.
 	 */
-	if(uio->uio_rw == UIO_READ) {
+	if (uio->uio_rw == UIO_READ) {
 		off_t size = sv->sv_i.sfi_size;
 		off_t endpos = uio->uio_offset + uio->uio_resid;
 
-		if(uio->uio_offset >= size) {
+		if (uio->uio_offset >= size) {
 			/* At or past EOF - just return */
 			return 0;
 		}
 
-		if(endpos > size) {
+		if (endpos > size) {
 			extraresid = endpos - size;
 			KASSERT(uio->uio_resid > extraresid);
 			uio->uio_resid -= extraresid;
@@ -290,7 +323,7 @@ int sfs_io(struct sfs_vnode *sv, struct uio *uio) {
 	 * First, do any leading partial block.
 	 */
 	blkoff = uio->uio_offset % SFS_BLOCKSIZE;
-	if(blkoff != 0) {
+	if (blkoff != 0) {
 		/* Number of bytes at beginning of block to skip */
 		uint32_t skip = blkoff;
 
@@ -298,24 +331,32 @@ int sfs_io(struct sfs_vnode *sv, struct uio *uio) {
 		uint32_t len = SFS_BLOCKSIZE - blkoff;
 
 		/* ...which might be less than the rest of the block */
-		if(len > uio->uio_resid) { len = uio->uio_resid; }
+		if (len > uio->uio_resid) {
+			len = uio->uio_resid;
+		}
 
 		/* Call sfs_partialio() to do it. */
 		result = sfs_partialio(sv, uio, skip, len);
-		if(result) { goto out; }
+		if (result) {
+			goto out;
+		}
 	}
 
 	/* If we're done, quit. */
-	if(uio->uio_resid == 0) { goto out; }
+	if (uio->uio_resid==0) {
+		goto out;
+	}
 
 	/*
 	 * Now we should be block-aligned. Do the remaining whole blocks.
 	 */
 	KASSERT(uio->uio_offset % SFS_BLOCKSIZE == 0);
 	nblocks = uio->uio_resid / SFS_BLOCKSIZE;
-	for(i = 0; i < nblocks; i++) {
+	for (i=0; i<nblocks; i++) {
 		result = sfs_blockio(sv, uio);
-		if(result) { goto out; }
+		if (result) {
+			goto out;
+		}
 	}
 
 	/*
@@ -323,15 +364,19 @@ int sfs_io(struct sfs_vnode *sv, struct uio *uio) {
 	 */
 	KASSERT(uio->uio_resid < SFS_BLOCKSIZE);
 
-	if(uio->uio_resid > 0) {
+	if (uio->uio_resid > 0) {
 		result = sfs_partialio(sv, uio, 0, uio->uio_resid);
-		if(result) { goto out; }
+		if (result) {
+			goto out;
+		}
 	}
 
-out:
+ out:
 
 	/* If writing and we did anything, adjust file length */
-	if(uio->uio_resid != origresid && uio->uio_rw == UIO_WRITE && uio->uio_offset > (off_t) sv->sv_i.sfi_size) {
+	if (uio->uio_resid != origresid &&
+	    uio->uio_rw == UIO_WRITE &&
+	    uio->uio_offset > (off_t)sv->sv_i.sfi_size) {
 		sv->sv_i.sfi_size = uio->uio_offset;
 		sv->sv_dirty = true;
 	}
@@ -357,7 +402,10 @@ out:
  * more advanced things to handle metadata and user data I/O
  * differently.
  */
-int sfs_metaio(struct sfs_vnode *sv, off_t actualpos, void *data, size_t len, enum uio_rw rw) {
+int
+sfs_metaio(struct sfs_vnode *sv, off_t actualpos, void *data, size_t len,
+	   enum uio_rw rw)
+{
 	struct sfs_fs *sfs = sv->sv_absvn.vn_fs->fs_data;
 	off_t endpos;
 	uint32_t vnblock;
@@ -385,9 +433,11 @@ int sfs_metaio(struct sfs_vnode *sv, off_t actualpos, void *data, size_t len, en
 	/* Get the disk block number */
 	doalloc = (rw == UIO_WRITE);
 	result = sfs_bmap(sv, vnblock, doalloc, &diskblock);
-	if(result) { return result; }
+	if (result) {
+		return result;
+	}
 
-	if(diskblock == 0) {
+	if (diskblock == 0) {
 		/* Should only get block 0 back if doalloc is false */
 		KASSERT(rw == UIO_READ);
 
@@ -398,22 +448,28 @@ int sfs_metaio(struct sfs_vnode *sv, off_t actualpos, void *data, size_t len, en
 
 	/* Read the block */
 	result = sfs_readblock(sfs, diskblock, metaiobuf, sizeof(metaiobuf));
-	if(result) { return result; }
+	if (result) {
+		return result;
+	}
 
-	if(rw == UIO_READ) {
+	if (rw == UIO_READ) {
 		/* Copy out the selected region */
 		memcpy(data, metaiobuf + blockoffset, len);
-	} else {
+	}
+	else {
 		/* Update the selected region */
 		memcpy(metaiobuf + blockoffset, data, len);
 
 		/* Write the block back */
-		result = sfs_writeblock(sfs, diskblock, metaiobuf, sizeof(metaiobuf));
-		if(result) { return result; }
+		result = sfs_writeblock(sfs, diskblock,
+					metaiobuf, sizeof(metaiobuf));
+		if (result) {
+			return result;
+		}
 
 		/* Update the vnode size if needed */
 		endpos = actualpos + len;
-		if(endpos > (off_t) sv->sv_i.sfi_size) {
+		if (endpos > (off_t)sv->sv_i.sfi_size) {
 			sv->sv_i.sfi_size = endpos;
 			sv->sv_dirty = true;
 		}

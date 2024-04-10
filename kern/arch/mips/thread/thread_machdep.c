@@ -31,15 +31,19 @@
  * Functions for handling struct thread_machdep.
  */
 
+#include <types.h>
 #include <lib.h>
 #include <thread.h>
 #include <threadprivate.h>
-#include <types.h>
 
-void thread_machdep_init(struct thread_machdep *tm) {
+void
+thread_machdep_init(struct thread_machdep *tm)
+{
 	tm->tm_badfaultfunc = NULL;
 }
 
-void thread_machdep_cleanup(struct thread_machdep *tm) {
+void
+thread_machdep_cleanup(struct thread_machdep *tm)
+{
 	KASSERT(tm->tm_badfaultfunc == NULL);
 }

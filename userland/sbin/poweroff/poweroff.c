@@ -36,7 +36,9 @@
  * Just calls reboot() with the RB_POWEROFF flag.
  */
 
-int main(void) {
+int
+main(void)
+{
 	reboot(RB_POWEROFF);
 	return 0;
 }

@@ -39,26 +39,30 @@
  *      when that assignment is complete.
  */
 
-#include <err.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
 #include <unistd.h>
+#include <string.h>
+#include <err.h>
 
-#define MAXLEVELS 5
+#define MAXLEVELS       5
 
-int main(void) {
+int
+main(void)
+{
 	int i;
 	const char *onename = "testdir";
 	char dirname[512];
 
 	strcpy(dirname, onename);
 
-	for(i = 0; i < MAXLEVELS; i++) {
+	for (i=0; i<MAXLEVELS; i++) {
 		printf("Creating directory: %s\n", dirname);
 
-		if(mkdir(dirname, 0755)) { err(1, "%s: mkdir", dirname); }
+		if (mkdir(dirname, 0755)) {
+			err(1, "%s: mkdir", dirname);
+		}
 
 		strcat(dirname, "/");
 		strcat(dirname, onename);
@@ -66,14 +70,17 @@ int main(void) {
 
 	printf("Passed directory creation test.\n");
 
-	for(i = 0; i < MAXLEVELS; i++) {
+	for (i=0; i<MAXLEVELS; i++) {
 		dirname[strlen(dirname) - strlen(onename) - 1] = 0;
 
 		printf("Removing directory: %s\n", dirname);
 
-		if(rmdir(dirname)) { err(1, "%s: rmdir", dirname); }
+		if (rmdir(dirname)) {
+			err(1, "%s: rmdir", dirname);
+		}
 	}
 	printf("Passed directory removal test.\n");
 
 	return 0;
 }
+

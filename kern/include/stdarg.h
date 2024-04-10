@@ -46,13 +46,13 @@
 typedef __va_list va_list;
 
 #if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 8)
-#define va_start(ap, fmt) __builtin_stdarg_start(ap, fmt)
+#define va_start(ap, fmt)  __builtin_stdarg_start(ap, fmt)
 #else
-#define va_start(ap, fmt) __builtin_va_start(ap, fmt)
+#define va_start(ap, fmt)  __builtin_va_start(ap, fmt)
 #endif
-#define va_arg(ap, t) __builtin_va_arg(ap, t)
-#define va_copy(ap1, ap2) __builtin_va_copy(ap1, ap2)
-#define va_end(ap) __builtin_va_end(ap)
+#define va_arg(ap,t)       __builtin_va_arg(ap, t)
+#define va_copy(ap1, ap2)  __builtin_va_copy(ap1, ap2)
+#define va_end(ap)         __builtin_va_end(ap)
 #endif
 
 /*
@@ -62,8 +62,8 @@ typedef __va_list va_list;
  * or split the definition of va_list into another header file, none
  * of which seems entirely desirable.
  */
-void vkprintf(const char *fmt, va_list ap) __PF(1, 0);
-int vsnprintf(char *buf, size_t maxlen, const char *fmt, va_list ap) __PF(3, 0);
+void vkprintf(const char *fmt, va_list ap) __PF(1,0);
+int vsnprintf(char *buf, size_t maxlen, const char *fmt, va_list ap) __PF(3,0);
 
 /*
  * The printf driver function (shared with libc).
@@ -72,7 +72,8 @@ int vsnprintf(char *buf, size_t maxlen, const char *fmt, va_list ap) __PF(3, 0);
  * The strings passed to the function might not be null-terminated; the
  * supplied length should be used explicitly.
  */
-int __vprintf(void (*func)(void *clientdata, const char *str, size_t len), void *clientdata, const char *format, va_list ap) __PF(3, 0);
+int __vprintf(void (*func)(void *clientdata, const char *str, size_t len),
+              void *clientdata, const char *format, va_list ap) __PF(3,0);
 
 
 #endif /* _STDARG_H_ */

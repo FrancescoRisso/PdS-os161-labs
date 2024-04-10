@@ -35,7 +35,7 @@
  */
 
 
-struct uio; /* in <uio.h> */
+struct uio;  /* in <uio.h> */
 
 /*
  * Filesystem-namespace-accessible device.
@@ -46,9 +46,9 @@ struct device {
 	blkcnt_t d_blocks;
 	blksize_t d_blocksize;
 
-	dev_t d_devnumber; /* serial number for this device */
+	dev_t d_devnumber;	/* serial number for this device */
 
-	void *d_data; /* device-specific data */
+	void *d_data;		/* device-specific data */
 };
 
 /*
@@ -66,9 +66,9 @@ struct device_ops {
 /*
  * Macros to shorten the calling sequences.
  */
-#define DEVOP_EACHOPEN(d, f) ((d)->d_ops->devop_eachopen(d, f))
-#define DEVOP_IO(d, u) ((d)->d_ops->devop_io(d, u))
-#define DEVOP_IOCTL(d, op, p) ((d)->d_ops->devop_ioctl(d, op, p))
+#define DEVOP_EACHOPEN(d, f)	((d)->d_ops->devop_eachopen(d, f))
+#define DEVOP_IO(d, u)		((d)->d_ops->devop_io(d, u))
+#define DEVOP_IOCTL(d, op, p)	((d)->d_ops->devop_ioctl(d, op, p))
 
 
 /* Create vnode for a vfs-level device. */

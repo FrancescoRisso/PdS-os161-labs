@@ -30,13 +30,15 @@
 /*
  * Network test code.
  */
+#include <types.h>
 #include <lib.h>
 #include <test.h>
-#include <types.h>
 
-int nettest(int nargs, char **args) {
-	(void) nargs;
-	(void) args;
+int
+nettest(int nargs, char **args)
+{
+	(void)nargs;
+	(void)args;
 	kprintf("No network support available\n");
 	return 1;
 }
