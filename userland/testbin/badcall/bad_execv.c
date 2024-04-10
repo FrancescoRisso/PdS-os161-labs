@@ -31,19 +31,16 @@
  * bad calls to execv()
  */
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
 #include <err.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "config.h"
 #include "test.h"
 
-static
-int
-exec_common_fork(void)
-{
+static int exec_common_fork(void) {
 	int pid, rv, status, err;
 
 	/*
@@ -52,7 +49,7 @@ exec_common_fork(void)
 	 */
 
 	pid = fork();
-	if (pid<0) {
+	if(pid < 0) {
 		err = errno;
 		report_begin("forking for test");
 		report_result(pid, err);
@@ -60,46 +57,38 @@ exec_common_fork(void)
 		return -1;
 	}
 
-	if (pid==0) {
+	if(pid == 0) {
 		/* child */
 		return 0;
 	}
 
 	rv = waitpid(pid, &status, 0);
-	if (rv == -1) {
+	if(rv == -1) {
 		err = errno;
 		report_begin("waiting for test subprocess");
 		report_result(rv, err);
 		report_failure();
 		return -1;
 	}
-	if (WIFEXITED(status) && WEXITSTATUS(status) == MAGIC_STATUS) {
-		return 1;
-	}
+	if(WIFEXITED(status) && WEXITSTATUS(status) == MAGIC_STATUS) { return 1; }
 	/* Oops... */
 	report_begin("exit code of subprocess; should be %d", MAGIC_STATUS);
-	if (WIFSIGNALED(status)) {
+	if(WIFSIGNALED(status)) {
 		report_warnx("signal %d", WTERMSIG(status));
-	}
-	else {
+	} else {
 		report_warnx("exit %d", WEXITSTATUS(status));
 	}
 	report_failure();
 	return -1;
 }
 
-static
-void
-exec_badprog(const void *prog, const char *desc)
-{
+static void exec_badprog(const void *prog, const char *desc) {
 	int rv;
 	char *args[2];
-	args[0] = (char *)"foo";
+	args[0] = (char *) "foo";
 	args[1] = NULL;
 
-	if (exec_common_fork() != 0) {
-		return;
-	}
+	if(exec_common_fork() != 0) { return; }
 
 	report_begin(desc);
 	rv = execv(prog, args);
@@ -107,18 +96,13 @@ exec_badprog(const void *prog, const char *desc)
 	exit(MAGIC_STATUS);
 }
 
-static
-void
-exec_emptyprog(void)
-{
+static void exec_emptyprog(void) {
 	int rv;
 	char *args[2];
-	args[0] = (char *)"foo";
+	args[0] = (char *) "foo";
 	args[1] = NULL;
 
-	if (exec_common_fork() != 0) {
-		return;
-	}
+	if(exec_common_fork() != 0) { return; }
 
 	report_begin("exec the empty string");
 	rv = execv("", args);
@@ -126,15 +110,10 @@ exec_emptyprog(void)
 	exit(MAGIC_STATUS);
 }
 
-static
-void
-exec_badargs(void *args, const char *desc)
-{
+static void exec_badargs(void *args, const char *desc) {
 	int rv;
 
-	if (exec_common_fork() != 0) {
-		return;
-	}
+	if(exec_common_fork() != 0) { return; }
 
 	report_begin(desc);
 	rv = execv("/bin/true", args);
@@ -142,20 +121,15 @@ exec_badargs(void *args, const char *desc)
 	exit(MAGIC_STATUS);
 }
 
-static
-void
-exec_onearg(void *ptr, const char *desc)
-{
+static void exec_onearg(void *ptr, const char *desc) {
 	int rv;
 
 	char *args[3];
-	args[0] = (char *)"foo";
-	args[1] = (char *)ptr;
+	args[0] = (char *) "foo";
+	args[1] = (char *) ptr;
 	args[2] = NULL;
 
-	if (exec_common_fork() != 0) {
-		return;
-	}
+	if(exec_common_fork() != 0) { return; }
 
 	report_begin(desc);
 	rv = execv("/bin/true", args);
@@ -163,9 +137,7 @@ exec_onearg(void *ptr, const char *desc)
 	exit(MAGIC_STATUS);
 }
 
-void
-test_execv(void)
-{
+void test_execv(void) {
 	exec_badprog(NULL, "exec with NULL program");
 	exec_badprog(INVAL_PTR, "exec with invalid pointer program");
 	exec_badprog(KERN_PTR, "exec with kernel pointer program");

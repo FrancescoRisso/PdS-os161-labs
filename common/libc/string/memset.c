@@ -28,8 +28,8 @@
  */
 
 #ifdef _KERNEL
-#include <types.h>
 #include <lib.h>
+#include <types.h>
 #else
 #include <string.h>
 #endif
@@ -38,15 +38,11 @@
  * C standard function - initialize a block of memory
  */
 
-void *
-memset(void *ptr, int ch, size_t len)
-{
+void *memset(void *ptr, int ch, size_t len) {
 	char *p = ptr;
 	size_t i;
 
-	for (i=0; i<len; i++) {
-		p[i] = ch;
-	}
+	for(i = 0; i < len; i++) { p[i] = ch; }
 
 	return ptr;
 }

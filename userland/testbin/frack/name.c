@@ -28,11 +28,11 @@
  * SUCH DAMAGE.
  */
 
-#include <string.h>
+#include "name.h"
+
 #include <assert.h>
 #include <err.h>
-
-#include "name.h"
+#include <string.h>
 
 #define MAXNAMES 32
 
@@ -71,22 +71,16 @@ static const char *const names[MAXNAMES] = {
 	"wasabi",
 };
 
-const char *
-name_get(unsigned name)
-{
+const char *name_get(unsigned name) {
 	assert(name < MAXNAMES);
 	return names[name];
 }
 
-unsigned
-name_find(const char *namestr)
-{
+unsigned name_find(const char *namestr) {
 	unsigned i;
 
-	for (i=0; i<MAXNAMES; i++) {
-		if (!strcmp(namestr, names[i])) {
-			return i;
-		}
+	for(i = 0; i < MAXNAMES; i++) {
+		if(!strcmp(namestr, names[i])) { return i; }
 	}
 	errx(1, "Encountered unknown/unexpected name %s", namestr);
 	return 0;

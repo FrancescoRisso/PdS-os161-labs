@@ -36,48 +36,37 @@
  * assignment.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	const char *filename;
 	int size;
 	int fd;
 	int r;
 	char byte;
 
-	if (argc != 3) {
-		errx(1, "Usage: sparsefile <filename> <size>");
-	}
+	if(argc != 3) { errx(1, "Usage: sparsefile <filename> <size>"); }
 
 	filename = argv[1];
 	size = atoi(argv[2]);
 	byte = '\n';
 
-	if (size == 0) {
-		err(1, "Sparse files of length zero are not meaningful");
-	}
+	if(size == 0) { err(1, "Sparse files of length zero are not meaningful"); }
 
 	printf("Creating a sparse file of size %d\n", size);
 
-	fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC);
-	if (fd < 0) {
-		err(1, "%s: create", filename);
-	}
+	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC);
+	if(fd < 0) { err(1, "%s: create", filename); }
 
-	if (lseek(fd, size-1, SEEK_SET) == -1) {
-		err(1, "%s: lseek", filename);
-	}
+	if(lseek(fd, size - 1, SEEK_SET) == -1) { err(1, "%s: lseek", filename); }
 	r = write(fd, &byte, 1);
-	if (r < 0) {
+	if(r < 0) {
 		err(1, "%s: write", filename);
-	}
-	else if (r != 1) {
+	} else if(r != 1) {
 		errx(1, "%s: write: Unexpected result count %d", filename, r);
 	}
 

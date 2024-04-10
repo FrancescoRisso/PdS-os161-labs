@@ -27,20 +27,16 @@
  * SUCH DAMAGE.
  */
 
-#include <types.h>
 #include <kern/errno.h>
 #include <lib.h>
+#include <types.h>
 /*#include <lamebus/lnet.h>*/ /* not yet */
 #include "autoconf.h"
 
-int
-config_lnet(struct lnet_softc *sc, int lnetno)
-{
-	(void)sc;
+int config_lnet(struct lnet_softc *sc, int lnetno) {
+	(void) sc;
 
 	kprintf("lnet%d: No network support in system\n", lnetno);
 
 	return ENODEV;
 }
-
-

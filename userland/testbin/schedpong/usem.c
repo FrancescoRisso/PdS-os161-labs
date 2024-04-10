@@ -33,78 +33,54 @@
  * library.
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <unistd.h>
-#include <err.h>
-
 #include "usem.h"
 
-void
-usem_init(struct usem *sem, const char *namefmt, ...)
-{
+#include <err.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+void usem_init(struct usem *sem, const char *namefmt, ...) {
 	va_list ap;
 
 	va_start(ap, namefmt);
 	vsnprintf(sem->name, sizeof(sem->name), namefmt, ap);
 	va_end(ap);
 
-	sem->fd = open(sem->name, O_RDWR|O_CREAT|O_TRUNC, 0664);
-	if (sem->fd < 0) {
-		err(1, "%s: create", sem->name);
-	}
+	sem->fd = open(sem->name, O_RDWR | O_CREAT | O_TRUNC, 0664);
+	if(sem->fd < 0) { err(1, "%s: create", sem->name); }
 	close(sem->fd);
 	sem->fd = -1;
 }
 
-void
-usem_open(struct usem *sem)
-{
+void usem_open(struct usem *sem) {
 	sem->fd = open(sem->name, O_RDWR);
-	if (sem->fd < 0) {
-		err(1, "%s: open", sem->name);
-	}
+	if(sem->fd < 0) { err(1, "%s: open", sem->name); }
 }
 
-void
-usem_close(struct usem *sem)
-{
-	if (close(sem->fd) == -1) {
-		warn("%s: close", sem->name);
-	}
+void usem_close(struct usem *sem) {
+	if(close(sem->fd) == -1) { warn("%s: close", sem->name); }
 }
 
-void
-usem_cleanup(struct usem *sem)
-{
-	(void)remove(sem->name);
+void usem_cleanup(struct usem *sem) {
+	(void) remove(sem->name);
 }
 
-void
-Pn(struct usem *sem, unsigned count)
-{
+void Pn(struct usem *sem, unsigned count) {
 	ssize_t r;
 	char c[count];
 
 	r = read(sem->fd, c, count);
-	if (r < 0) {
-		err(1, "%s: read", sem->name);
-	}
-	if ((size_t)r < count) {
-		errx(1, "%s: read: unexpected EOF", sem->name);
-	}
+	if(r < 0) { err(1, "%s: read", sem->name); }
+	if((size_t) r < count) { errx(1, "%s: read: unexpected EOF", sem->name); }
 }
 
-void
-P(struct usem *sem)
-{
+void P(struct usem *sem) {
 	Pn(sem, 1);
 }
 
-void
-Vn(struct usem *sem, unsigned count)
-{
+void Vn(struct usem *sem, unsigned count) {
 	ssize_t r;
 	char c[count];
 
@@ -112,16 +88,10 @@ Vn(struct usem *sem, unsigned count)
 	memset(c, 0, count);
 
 	r = write(sem->fd, c, count);
-	if (r < 0) {
-		err(1, "%s: write", sem->name);
-	}
-	if ((size_t)r < count) {
-		errx(1, "%s: write: Short count", sem->name);
-	}
+	if(r < 0) { err(1, "%s: write", sem->name); }
+	if((size_t) r < count) { errx(1, "%s: write: Short count", sem->name); }
 }
 
-void
-V(struct usem *sem)
-{
+void V(struct usem *sem) {
 	Vn(sem, 1);
 }

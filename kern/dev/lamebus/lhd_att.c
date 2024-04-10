@@ -30,28 +30,26 @@
 /*
  * Code for probe/attach of lhd to LAMEbus.
  */
-#include <types.h>
-#include <lib.h>
 #include <lamebus/lamebus.h>
 #include <lamebus/lhd.h>
+#include <lib.h>
+#include <types.h>
+
 #include "autoconf.h"
 
 /* Lowest revision we support */
-#define LOW_VERSION   2
+#define LOW_VERSION 2
 
-struct lhd_softc *
-attach_lhd_to_lamebus(int lhdno, struct lamebus_softc *sc)
-{
+struct lhd_softc *attach_lhd_to_lamebus(int lhdno, struct lamebus_softc *sc) {
 	struct lhd_softc *lh;
-	int slot = lamebus_probe(sc, LB_VENDOR_CS161, LBCS161_DISK,
-				 LOW_VERSION, NULL);
-	if (slot < 0) {
+	int slot = lamebus_probe(sc, LB_VENDOR_CS161, LBCS161_DISK, LOW_VERSION, NULL);
+	if(slot < 0) {
 		/* None found */
 		return NULL;
 	}
 
 	lh = kmalloc(sizeof(struct lhd_softc));
-	if (lh==NULL) {
+	if(lh == NULL) {
 		/* Out of memory */
 		return NULL;
 	}

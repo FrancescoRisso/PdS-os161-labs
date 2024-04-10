@@ -27,33 +27,29 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>	/* for CHAR_BIT */
-#include <limits.h>	/* also for CHAR_BIT */
-#include <stdint.h>
+#include "sb.h"
+
 #include <assert.h>
 #include <err.h>
+#include <kern/sfs.h>
+#include <limits.h> /* also for CHAR_BIT */
+#include <stdint.h>
+#include <sys/types.h> /* for CHAR_BIT */
 
 #include "compat.h"
-#include <kern/sfs.h>
-
-#include "utils.h"
-#include "sfs.h"
-#include "sb.h"
 #include "freemap.h"
 #include "main.h"
+#include "sfs.h"
+#include "utils.h"
 
 static struct sfs_superblock sb;
 
 /*
  * Load the superblock.
  */
-void
-sb_load(void)
-{
+void sb_load(void) {
 	sfs_readsb(SFS_SUPER_BLOCK, &sb);
-	if (sb.sb_magic != SFS_MAGIC) {
-		errx(EXIT_FATAL, "Not an sfs filesystem");
-	}
+	if(sb.sb_magic != SFS_MAGIC) { errx(EXIT_FATAL, "Not an sfs filesystem"); }
 
 	assert(sb.sb_nblocks > 0);
 	assert(SFS_FREEMAPBLOCKS(sb.sb_nblocks) > 0);
@@ -62,10 +58,8 @@ sb_load(void)
 /*
  * Validate the superblock.
  */
-void
-sb_check(void)
-{
-	int schanged=0;
+void sb_check(void) {
+	int schanged = 0;
 
 	/*
 	 * FUTURE: should we check sb.sb_nblocks against diskblocks()?
@@ -73,34 +67,30 @@ sb_check(void)
 
 	/* Check the superblock fields */
 
-	if (checknullstring(sb.sb_volname, sizeof(sb.sb_volname))) {
+	if(checknullstring(sb.sb_volname, sizeof(sb.sb_volname))) {
 		warnx("Volume name not null-terminated (fixed)");
 		setbadness(EXIT_RECOV);
 		schanged = 1;
 	}
-	if (checkbadstring(sb.sb_volname)) {
+	if(checkbadstring(sb.sb_volname)) {
 		warnx("Volume name contains illegal characters (fixed)");
 		setbadness(EXIT_RECOV);
 		schanged = 1;
 	}
-	if (checkzeroed(sb.reserved, sizeof(sb.reserved))) {
+	if(checkzeroed(sb.reserved, sizeof(sb.reserved))) {
 		warnx("Reserved section of superblock not zeroed (fixed)");
 		setbadness(EXIT_RECOV);
 		schanged = 1;
 	}
 
 	/* Write the superblock back if necessary */
-	if (schanged) {
-		sfs_writesb(SFS_SUPER_BLOCK, &sb);
-	}
+	if(schanged) { sfs_writesb(SFS_SUPER_BLOCK, &sb); }
 }
 
 /*
  * Return the total number of blocks in the volume.
  */
-uint32_t
-sb_totalblocks(void)
-{
+uint32_t sb_totalblocks(void) {
 	return sb.sb_nblocks;
 }
 
@@ -108,17 +98,13 @@ sb_totalblocks(void)
  * Return the number of freemap blocks.
  * (this function probably ought to go away)
  */
-uint32_t
-sb_freemapblocks(void)
-{
+uint32_t sb_freemapblocks(void) {
 	return SFS_FREEMAPBLOCKS(sb.sb_nblocks);
 }
 
 /*
  * Return the volume name.
  */
-const char *
-sb_volname(void)
-{
+const char* sb_volname(void) {
 	return sb.sb_volname;
 }

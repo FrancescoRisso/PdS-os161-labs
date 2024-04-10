@@ -7,14 +7,14 @@
  * malloc is important for performance.
  */
 
+#include <assert.h>
+#include <err.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
-#include <err.h>
 
 /* OS/161 doesn't currently have a way to get this from the kernel. */
 #define PAGE_SIZE 4096
@@ -33,59 +33,40 @@ static unsigned touchpages;
 static unsigned bias;
 
 
-static
-void
-moremem(void)
-{
+static void moremem(void) {
 	static unsigned totalpages;
 
 	void *ptr;
 	unsigned i;
 
-	for (i=0; i<allocs; i++) {
+	for(i = 0; i < allocs; i++) {
 		ptr = sbrk(PAGE_SIZE);
-		if (ptr == (void *)-1) {
-			err(1, "After %u pages: sbrk", totalpages);
-		}
+		if(ptr == (void *) -1) { err(1, "After %u pages: sbrk", totalpages); }
 		totalpages++;
 		lastpage = ptr;
-		if (firstpage == NULL) {
-			firstpage = ptr;
-		}
+		if(firstpage == NULL) { firstpage = ptr; }
 	}
 }
 
-static
-void
-touchpage(unsigned pagenum)
-{
+static void touchpage(unsigned pagenum) {
 	int *ptr;
 
-	ptr = (void *)((uintptr_t)firstpage + PAGE_SIZE * pagenum);
+	ptr = (void *) ((uintptr_t) firstpage + PAGE_SIZE * pagenum);
 	*ptr = pagenum;
 }
 
-static
-unsigned
-pickpage(unsigned numpages)
-{
+static unsigned pickpage(unsigned numpages) {
 	unsigned mnum, moffset;
 	unsigned span, val, i;
 
 	/* take 1 in 1000 pages uniformly from the entire space */
-	if (random() % 1000 == 0) {
-		return random() % numpages;
-	}
+	if(random() % 1000 == 0) { return random() % numpages; }
 
 	/* the rest is taken from the middle 1% */
 
 	mnum = numpages / 100;
-	if (mnum < touchpages * 2) {
-		mnum = touchpages * 2;
-	}
-	if (mnum >= numpages) {
-		mnum = numpages;
-	}
+	if(mnum < touchpages * 2) { mnum = touchpages * 2; }
+	if(mnum >= numpages) { mnum = numpages; }
 	moffset = numpages / 2 - mnum / 2;
 
 	assert(bias >= 1);
@@ -93,55 +74,36 @@ pickpage(unsigned numpages)
 
 	do {
 		val = 0;
-		for (i=0; i<bias; i++) {
-			val += random() % span;
-		}
-	} while (val >= mnum);
+		for(i = 0; i < bias; i++) { val += random() % span; }
+	} while(val >= mnum);
 	return moffset + val;
 }
 
-static
-void
-touchmem(void)
-{
+static void touchmem(void) {
 	unsigned i, num;
 
-	num = (((uintptr_t)lastpage - (uintptr_t)firstpage) / PAGE_SIZE) + 1;
+	num = (((uintptr_t) lastpage - (uintptr_t) firstpage) / PAGE_SIZE) + 1;
 
-	if (num % 256 == 0) {
-		warnx("%u pages", num);
-	}
+	if(num % 256 == 0) { warnx("%u pages", num); }
 
-	for (i=0; i<touchpages; i++) {
-		touchpage(pickpage(num));
-	}
+	for(i = 0; i < touchpages; i++) { touchpage(pickpage(num)); }
 }
 
-static
-void
-run(void)
-{
-	while (1) {
+static void run(void) {
+	while(1) {
 		moremem();
 		touchmem();
 	}
 }
 
-static
-void
-printsettings(void)
-{
+static void printsettings(void) {
 	printf("Page size: %u\n", PAGE_SIZE);
-	printf("Allocating %u pages and touching %u pages on each cycle.\n",
-	       allocs, touchpages);
+	printf("Allocating %u pages and touching %u pages on each cycle.\n", allocs, touchpages);
 	printf("Page selection bias: %u\n", bias);
 	printf("\n");
 }
 
-static
-void
-usage(void)
-{
+static void usage(void) {
 	warnx("bloat [-a allocs] [-b bias] [-p pages]");
 	warnx("   allocs: number of pages allocated per cycle (default 4)");
 	warnx("   bias: number of dice rolled to touch pages (default 8)");
@@ -149,9 +111,7 @@ usage(void)
 	exit(1);
 }
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	int i;
 
 	/* default mode */
@@ -161,38 +121,24 @@ main(int argc, char *argv[])
 
 	srandom(1234);
 
-	for (i=1; i<argc; i++) {
-		if (!strcmp(argv[i], "-a")) {
+	for(i = 1; i < argc; i++) {
+		if(!strcmp(argv[i], "-a")) {
 			i++;
-			if (i == argc) {
-				errx(1, "-a: option requires argument");
-			}
+			if(i == argc) { errx(1, "-a: option requires argument"); }
 			allocs = atoi(argv[i]);
-			if (allocs == 0) {
-				errx(1, "-a: must not be zero");
-			}
-		}
-		else if (!strcmp(argv[i], "-b")) {
+			if(allocs == 0) { errx(1, "-a: must not be zero"); }
+		} else if(!strcmp(argv[i], "-b")) {
 			i++;
-			if (i == argc) {
-				errx(1, "-b: option requires argument");
-			}
+			if(i == argc) { errx(1, "-b: option requires argument"); }
 			bias = atoi(argv[i]);
-			if (bias == 0) {
-				errx(1, "-b: must not be zero");
-			}
-		}
-		else if (!strcmp(argv[i], "-h")) {
+			if(bias == 0) { errx(1, "-b: must not be zero"); }
+		} else if(!strcmp(argv[i], "-h")) {
 			usage();
-		}
-		else if (!strcmp(argv[i], "-p")) {
+		} else if(!strcmp(argv[i], "-p")) {
 			i++;
-			if (i == argc) {
-				errx(1, "-p: option requires argument");
-			}
+			if(i == argc) { errx(1, "-p: option requires argument"); }
 			touchpages = atoi(argv[i]);
-		}
-		else {
+		} else {
 			errx(1, "Argument %s not recognized", argv[i]);
 			usage();
 		}

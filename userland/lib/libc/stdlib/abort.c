@@ -38,8 +38,6 @@
  * nonzero exit code, skipping any libc cleanup.
  */
 
-void
-abort(void)
-{
+void abort(void) {
 	_exit(255);
 }

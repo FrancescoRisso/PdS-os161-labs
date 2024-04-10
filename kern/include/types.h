@@ -87,7 +87,9 @@
  * with other pointers.
  */
 
-struct __userptr { char _dummy; };
+struct __userptr {
+	char _dummy;
+};
 typedef struct __userptr *userptr_t;
 typedef const struct __userptr *const_userptr_t;
 
@@ -143,13 +145,13 @@ typedef __socklen_t socklen_t;
  * Null pointer.
  */
 
-#define NULL ((void *)0)
+#define NULL ((void *) 0)
 
 /*
  * Boolean.
  */
 typedef _Bool bool;
-#define true  1
+#define true 1
 #define false 0
 
 #endif /* _TYPES_H_ */

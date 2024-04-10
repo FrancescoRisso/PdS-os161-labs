@@ -33,8 +33,8 @@
  */
 
 #ifdef _KERNEL
-#include <types.h>
 #include <lib.h>
+#include <types.h>
 #else
 #include <string.h>
 #endif
@@ -43,13 +43,9 @@
  * C standard string function: get length of a string
  */
 
-size_t
-strlen(const char *str)
-{
+size_t strlen(const char *str) {
 	size_t ret = 0;
 
-	while (str[ret]) {
-		ret++;
-	}
+	while(str[ret]) { ret++; }
 	return ret;
 }

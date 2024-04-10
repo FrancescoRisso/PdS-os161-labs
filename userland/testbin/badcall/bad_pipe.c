@@ -31,22 +31,19 @@
  * pipe
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include <errno.h>
-#include <err.h>
 
 #include "config.h"
 #include "test.h"
 
-static
-void
-pipe_badptr(void *ptr, const char *desc)
-{
+static void pipe_badptr(void *ptr, const char *desc) {
 	int rv;
 
 	report_begin("%s", desc);
@@ -54,30 +51,25 @@ pipe_badptr(void *ptr, const char *desc)
 	report_check(rv, errno, EFAULT);
 }
 
-static
-void
-pipe_unaligned(void)
-{
+static void pipe_unaligned(void) {
 	int fds[3], rv;
 	char *ptr;
 
 	report_begin("pipe with unaligned pointer");
 
-	ptr = (char *)&fds[0];
+	ptr = (char *) &fds[0];
 	ptr++;
 
-	rv = pipe((int *)ptr);
+	rv = pipe((int *) ptr);
 	report_survival(rv, errno);
-	if (rv == 0) {
-		memmove(fds, ptr, 2*sizeof(int));
+	if(rv == 0) {
+		memmove(fds, ptr, 2 * sizeof(int));
 		close(fds[0]);
 		close(fds[1]);
 	}
 }
 
-void
-test_pipe(void)
-{
+void test_pipe(void) {
 	pipe_badptr(NULL, "pipe with NULL pointer");
 	pipe_badptr(INVAL_PTR, "pipe with invalid pointer");
 	pipe_badptr(KERN_PTR, "pipe with kernel pointer");
