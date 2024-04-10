@@ -39,10 +39,10 @@
  * (This test also depends on fork working properly.)
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 #define PATH_CAT "/bin/cat"
 #define INFILE "redirect.in"
@@ -50,68 +50,40 @@
 
 static const char slogan[] = "CECIDI, ET NON SURGERE POSSUM!\n";
 
-static
-int
-doopen(const char *path, int openflags)
-{
+static int doopen(const char *path, int openflags) {
 	int fd;
 
 	fd = open(path, openflags, 0664);
-	if (fd < 0) {
-		err(1, "%s", path);
-	}
+	if(fd < 0) { err(1, "%s", path); }
 	return fd;
 }
 
-static
-void
-dodup2(int ofd, int nfd, const char *file)
-{
+static void dodup2(int ofd, int nfd, const char *file) {
 	int r;
 
 	r = dup2(ofd, nfd);
-	if (r < 0) {
-		err(1, "%s: dup2", file);
-	}
-	if (r != nfd) {
-		errx(1, "%s: dup2: Expected %d, got %d", nfd, r);
-	}
+	if(r < 0) { err(1, "%s: dup2", file); }
+	if(r != nfd) { errx(1, "%s: dup2: Expected %d, got %d", nfd, r); }
 }
 
-static
-void
-doclose(int fd, const char *file)
-{
-	if (close(fd)) {
-		warnx("%s: close", file);
-	}
+static void doclose(int fd, const char *file) {
+	if(close(fd)) { warnx("%s: close", file); }
 }
 
-static
-void
-mkfile(void)
-{
+static void mkfile(void) {
 	int fd;
 	ssize_t r;
 
-	fd = doopen(INFILE, O_WRONLY|O_CREAT|O_TRUNC);
+	fd = doopen(INFILE, O_WRONLY | O_CREAT | O_TRUNC);
 
 	r = write(fd, slogan, strlen(slogan));
-	if (r < 0) {
-		err(1, "%s: write", INFILE);
-	}
-	if ((size_t)r != strlen(slogan)) {
-		errx(1, "%s: write: Short count (got %zd, expected %zu)",
-		     INFILE, r, strlen(slogan));
-	}
+	if(r < 0) { err(1, "%s: write", INFILE); }
+	if((size_t) r != strlen(slogan)) { errx(1, "%s: write: Short count (got %zd, expected %zu)", INFILE, r, strlen(slogan)); }
 
 	doclose(fd, INFILE);
 }
 
-static
-void
-chkfile(void)
-{
+static void chkfile(void) {
 	char buf[256];
 	ssize_t r;
 	int fd;
@@ -119,37 +91,25 @@ chkfile(void)
 	fd = doopen(OUTFILE, O_RDONLY);
 
 	r = read(fd, buf, sizeof(buf));
-	if (r < 0) {
-		err(1, "%s: read", OUTFILE);
-	}
-	if (r == 0) {
-		errx(1, "%s: read: Unexpected EOF", OUTFILE);
-	}
-	if ((size_t)r != strlen(slogan)) {
-		errx(1, "%s: read: Short count (got %zd, expected %zu)",
-		     OUTFILE, r, strlen(slogan));
-	}
+	if(r < 0) { err(1, "%s: read", OUTFILE); }
+	if(r == 0) { errx(1, "%s: read: Unexpected EOF", OUTFILE); }
+	if((size_t) r != strlen(slogan)) { errx(1, "%s: read: Short count (got %zd, expected %zu)", OUTFILE, r, strlen(slogan)); }
 
 	doclose(fd, OUTFILE);
 }
 
-static
-void
-cat(void)
-{
+static void cat(void) {
 	pid_t pid;
 	int rfd, wfd, result, status;
 	const char *args[2];
 
 	rfd = doopen(INFILE, O_RDONLY);
-	wfd = doopen(OUTFILE, O_WRONLY|O_CREAT|O_TRUNC);
+	wfd = doopen(OUTFILE, O_WRONLY | O_CREAT | O_TRUNC);
 
 	pid = fork();
-	if (pid < 0) {
-		err(1, "fork");
-	}
+	if(pid < 0) { err(1, "fork"); }
 
-	if (pid == 0) {
+	if(pid == 0) {
 		/* child */
 		dodup2(rfd, STDIN_FILENO, INFILE);
 		dodup2(wfd, STDOUT_FILENO, OUTFILE);
@@ -157,7 +117,7 @@ cat(void)
 		doclose(wfd, OUTFILE);
 		args[0] = "cat";
 		args[1] = NULL;
-		execv(PATH_CAT, (char **)args);
+		execv(PATH_CAT, (char **) args);
 		warn("%s: execv", PATH_CAT);
 		_exit(1);
 	}
@@ -167,20 +127,12 @@ cat(void)
 	doclose(wfd, OUTFILE);
 
 	result = waitpid(pid, &status, 0);
-	if (result == -1) {
-		err(1, "waitpid");
-	}
-	if (WIFSIGNALED(status)) {
-		errx(1, "pid %d: Signal %d", (int)pid, WTERMSIG(status));
-	}
-	if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-		errx(1, "pid %d: Exit %d", (int)pid, WEXITSTATUS(status));
-	}
+	if(result == -1) { err(1, "waitpid"); }
+	if(WIFSIGNALED(status)) { errx(1, "pid %d: Signal %d", (int) pid, WTERMSIG(status)); }
+	if(WIFEXITED(status) && WEXITSTATUS(status) != 0) { errx(1, "pid %d: Exit %d", (int) pid, WEXITSTATUS(status)); }
 }
 
-int
-main(void)
-{
+int main(void) {
 	printf("Creating %s...\n", INFILE);
 	mkfile();
 
@@ -191,7 +143,7 @@ main(void)
 	chkfile();
 
 	printf("Passed.\n");
-	(void)remove(INFILE);
-	(void)remove(OUTFILE);
+	(void) remove(INFILE);
+	(void) remove(OUTFILE);
 	return 0;
 }

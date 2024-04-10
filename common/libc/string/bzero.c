@@ -33,8 +33,8 @@
  */
 
 #ifdef _KERNEL
-#include <types.h>
 #include <lib.h>
+#include <types.h>
 #else
 #include <stdint.h>
 #include <string.h>
@@ -45,9 +45,7 @@
  * memory.
  */
 
-void
-bzero(void *vblock, size_t len)
-{
+void bzero(void *vblock, size_t len) {
 	char *block = vblock;
 	size_t i;
 
@@ -61,16 +59,10 @@ bzero(void *vblock, size_t len)
 	 * divides and moduli out. Fortunately, it is.
 	 */
 
-	if ((uintptr_t)block % sizeof(long) == 0 &&
-	    len % sizeof(long) == 0) {
-		long *lb = (long *)block;
-		for (i=0; i<len/sizeof(long); i++) {
-			lb[i] = 0;
-		}
-	}
-	else {
-		for (i=0; i<len; i++) {
-			block[i] = 0;
-		}
+	if((uintptr_t) block % sizeof(long) == 0 && len % sizeof(long) == 0) {
+		long *lb = (long *) block;
+		for(i = 0; i < len / sizeof(long); i++) { lb[i] = 0; }
+	} else {
+		for(i = 0; i < len; i++) { block[i] = 0; }
 	}
 }

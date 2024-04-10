@@ -35,8 +35,8 @@
  * include stdarg.h here.
  */
 #include <kern/types.h>
-#include <types/size_t.h>
 #include <sys/null.h>
+#include <types/size_t.h>
 
 /* Constant returned by a bunch of stdio functions on error */
 #define EOF (-1)
@@ -45,10 +45,7 @@
  * The actual guts of printf
  * (for libc internal use only)
  */
-int __vprintf(void (*sendfunc)(void *clientdata, const char *, size_t len),
-	      void *clientdata,
-	      const char *fmt,
-	      __va_list ap);
+int __vprintf(void (*sendfunc)(void *clientdata, const char *, size_t len), void *clientdata, const char *fmt, __va_list ap);
 
 /* Printf calls for user programs */
 int printf(const char *fmt, ...);

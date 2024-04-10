@@ -31,22 +31,19 @@
  * Invalid calls to reboot()
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include <errno.h>
-#include <err.h>
 
 #include "config.h"
 #include "test.h"
 
-static
-void
-reboot_badflags(void)
-{
+static void reboot_badflags(void) {
 	int rv;
 
 	printf("(This should not kill the system...)\n");
@@ -55,8 +52,6 @@ reboot_badflags(void)
 	report_check(rv, errno, EINVAL);
 }
 
-void
-test_reboot(void)
-{
+void test_reboot(void) {
 	reboot_badflags();
 }

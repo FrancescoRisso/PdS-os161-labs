@@ -45,8 +45,9 @@
  * OS/161 runs natively on a big-endian platform, so we can
  * conveniently use the byteswapping functions for network byte order.
  */
-#include <netinet/in.h> // for arpa/inet.h
-#include <arpa/inet.h>  // for ntohl
+#include <arpa/inet.h>   // for ntohl
+#include <netinet/in.h>  // for arpa/inet.h
+
 #include "hostcompat.h"
 #define SWAP64(x) ntohll(x)
 #define SWAP32(x) ntohl(x)

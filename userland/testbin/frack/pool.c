@@ -28,35 +28,30 @@
  * SUCH DAMAGE.
  */
 
-#include <stdint.h>
-#include <assert.h>
-#include <err.h>
-
 #include "pool.h"
 
-unsigned
-poolalloc(struct poolctl *pool)
-{
+#include <assert.h>
+#include <err.h>
+#include <stdint.h>
+
+unsigned poolalloc(struct poolctl *pool) {
 	uint32_t mask;
 	unsigned j, i;
 
 	assert(pool->max % 32 == 0);
-	for (j=0; j<pool->max/32; j++) {
-		for (mask=1, i=0; i<32; mask<<=1, i++) {
-			if ((pool->inuse[j] & mask) == 0) {
+	for(j = 0; j < pool->max / 32; j++) {
+		for(mask = 1, i = 0; i < 32; mask <<= 1, i++) {
+			if((pool->inuse[j] & mask) == 0) {
 				pool->inuse[j] |= mask;
-				return j*32 + i;
+				return j * 32 + i;
 			}
 		}
 	}
-	errx(1, "Too many %s -- increase %s in %s",
-	     pool->itemtype, pool->maxname, pool->file);
+	errx(1, "Too many %s -- increase %s in %s", pool->itemtype, pool->maxname, pool->file);
 	return 0;
 }
 
-void
-poolfree(struct poolctl *pool, unsigned num)
-{
+void poolfree(struct poolctl *pool, unsigned num) {
 	uint32_t mask;
 	unsigned pos;
 
@@ -66,5 +61,5 @@ poolfree(struct poolctl *pool, unsigned num)
 	mask = 1 << (num % 32);
 
 	assert(pool->inuse[pos] & mask);
-	pool->inuse[pos] &= ~(uint32_t)mask;
+	pool->inuse[pos] &= ~(uint32_t) mask;
 }

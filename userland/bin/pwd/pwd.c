@@ -27,11 +27,11 @@
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
 #include <err.h>
 #include <limits.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 /*
  * pwd - print working directory.
@@ -41,15 +41,11 @@
  * system call.)
  */
 
-int
-main(void)
-{
-	char buf[PATH_MAX+1], *p;
+int main(void) {
+	char buf[PATH_MAX + 1], *p;
 
 	p = getcwd(buf, sizeof(buf));
-	if (p == NULL) {
-		err(1, ".");
-	}
+	if(p == NULL) { err(1, "."); }
 	printf("%s\n", buf);
 	return 0;
 }

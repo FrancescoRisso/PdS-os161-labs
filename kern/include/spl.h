@@ -74,8 +74,8 @@ int splx(int);
 /*
  * Integer interrupt priority levels.
  */
-#define IPL_NONE   0
-#define IPL_HIGH   1
+#define IPL_NONE 0
+#define IPL_HIGH 1
 
 /*
  * Lower-level functions for explicitly raising and lowering
@@ -92,16 +92,12 @@ void spllower(int oldipl, int newipl);
 ////////////////////////////////////////////////////////////
 
 SPL_INLINE
-int
-spl0(void)
-{
+int spl0(void) {
 	return splx(IPL_NONE);
 }
 
 SPL_INLINE
-int
-splhigh(void)
-{
+int splhigh(void) {
 	return splx(IPL_HIGH);
 }
 

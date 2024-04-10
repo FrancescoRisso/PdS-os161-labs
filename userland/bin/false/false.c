@@ -27,8 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#include <unistd.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 /*
  * false - fail.
@@ -37,9 +37,7 @@
  * sure does - it fails all the time."
  */
 
-int
-main(void)
-{
+int main(void) {
 	/* Just exit with a failure code. */
 	exit(1);
 }

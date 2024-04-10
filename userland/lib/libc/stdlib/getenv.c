@@ -45,34 +45,23 @@ extern char **__environ;
  * This is what we use by default if the kernel didn't supply an
  * environment.
  */
-static const char *__default_environ[] = {
-	"PATH=/bin:/sbin:/testbin",
-	"SHELL=/bin/sh",
-	"TERM=vt220",
-	NULL
-};
+static const char *__default_environ[] = {"PATH=/bin:/sbin:/testbin", "SHELL=/bin/sh", "TERM=vt220", NULL};
 
-char *
-getenv(const char *var)
-{
+char *getenv(const char *var) {
 	size_t varlen, thislen;
 	char *s;
 	unsigned i;
 
-	if (__environ == NULL) {
-		__environ = (char **)__default_environ;
-	}
+	if(__environ == NULL) { __environ = (char **) __default_environ; }
 	varlen = strlen(var);
-	for (i=0; __environ[i] != NULL; i++) {
+	for(i = 0; __environ[i] != NULL; i++) {
 		s = strchr(__environ[i], '=');
-		if (s == NULL) {
+		if(s == NULL) {
 			/* ? */
 			continue;
 		}
 		thislen = s - __environ[i];
-		if (thislen == varlen && !memcmp(__environ[i], var, thislen)) {
-			return s + 1;
-		}
+		if(thislen == varlen && !memcmp(__environ[i], var, thislen)) { return s + 1; }
 	}
 	return NULL;
 }

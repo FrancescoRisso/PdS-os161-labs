@@ -27,21 +27,21 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>	/* for CHAR_BIT */
-#include <limits.h>	/* also for CHAR_BIT */
-#include <stdint.h>
-#include <stdio.h>
+#include "freemap.h"
+
 #include <assert.h>
 #include <err.h>
+#include <kern/sfs.h>
+#include <limits.h> /* also for CHAR_BIT */
+#include <stdint.h>
+#include <stdio.h>
+#include <sys/types.h> /* for CHAR_BIT */
 
 #include "compat.h"
-#include <kern/sfs.h>
-
-#include "utils.h"
-#include "sfs.h"
-#include "sb.h"
-#include "freemap.h"
 #include "main.h"
+#include "sb.h"
+#include "sfs.h"
+#include "utils.h"
 
 static unsigned long blocksinuse = 0;
 static uint8_t *freemapdata;
@@ -52,9 +52,7 @@ static uint8_t *tofreedata;
  * called after the superblock is loaded so we can ask how big the
  * volume is.
  */
-void
-freemap_setup(void)
-{
+void freemap_setup(void) {
 	size_t i, mapbytes;
 	uint32_t fsblocks, mapblocks;
 
@@ -64,55 +62,29 @@ freemap_setup(void)
 
 	freemapdata = domalloc(mapbytes * sizeof(uint8_t));
 	tofreedata = domalloc(mapbytes * sizeof(uint8_t));
-	for (i=0; i<mapbytes; i++) {
-		freemapdata[i] = tofreedata[i] = 0;
-	}
+	for(i = 0; i < mapbytes; i++) { freemapdata[i] = tofreedata[i] = 0; }
 
 	/* Mark off what's in the freemap but past the volume end. */
-	for (i=fsblocks; i < mapblocks*SFS_BITSPERBLOCK; i++) {
-		freemap_blockinuse(i, B_PASTEND, 0);
-	}
+	for(i = fsblocks; i < mapblocks * SFS_BITSPERBLOCK; i++) { freemap_blockinuse(i, B_PASTEND, 0); }
 
 	/* Mark the superblock block and the freemap blocks in use */
 	freemap_blockinuse(SFS_SUPER_BLOCK, B_SUPERBLOCK, 0);
-	for (i=0; i < mapblocks; i++) {
-		freemap_blockinuse(SFS_FREEMAP_START+i, B_FREEMAPBLOCK, i);
-	}
+	for(i = 0; i < mapblocks; i++) { freemap_blockinuse(SFS_FREEMAP_START + i, B_FREEMAPBLOCK, i); }
 }
 
 /*
  * Return a string for a blockusage; used for printing errors.
  */
-static
-const char *
-blockusagestr(blockusage_t how, uint32_t howdesc)
-{
+static const char *blockusagestr(blockusage_t how, uint32_t howdesc) {
 	static char rv[256];
-	switch (how) {
-	    case B_SUPERBLOCK:
-		return "superblock";
-	    case B_FREEMAPBLOCK:
-		snprintf(rv, sizeof(rv), "freemap block %lu",
-			 (unsigned long) howdesc);
-		break;
-	    case B_INODE:
-		snprintf(rv, sizeof(rv), "inode %lu",
-			 (unsigned long) howdesc);
-		break;
-	    case B_IBLOCK:
-		snprintf(rv, sizeof(rv), "indirect block of inode %lu",
-			 (unsigned long) howdesc);
-		break;
-	    case B_DIRDATA:
-		snprintf(rv, sizeof(rv), "directory data from inode %lu",
-			 (unsigned long) howdesc);
-		break;
-	    case B_DATA:
-		snprintf(rv, sizeof(rv), "file data from inode %lu",
-			 (unsigned long) howdesc);
-		break;
-	    case B_PASTEND:
-		return "past the end of the fs";
+	switch(how) {
+		case B_SUPERBLOCK: return "superblock";
+		case B_FREEMAPBLOCK: snprintf(rv, sizeof(rv), "freemap block %lu", (unsigned long) howdesc); break;
+		case B_INODE: snprintf(rv, sizeof(rv), "inode %lu", (unsigned long) howdesc); break;
+		case B_IBLOCK: snprintf(rv, sizeof(rv), "indirect block of inode %lu", (unsigned long) howdesc); break;
+		case B_DIRDATA: snprintf(rv, sizeof(rv), "directory data from inode %lu", (unsigned long) howdesc); break;
+		case B_DATA: snprintf(rv, sizeof(rv), "file data from inode %lu", (unsigned long) howdesc); break;
+		case B_PASTEND: return "past the end of the fs";
 	}
 	return rv;
 }
@@ -123,28 +95,23 @@ blockusagestr(blockusage_t how, uint32_t howdesc)
  *
  * FUTURE: this should not produce unrecoverable errors.
  */
-void
-freemap_blockinuse(uint32_t block, blockusage_t how, uint32_t howdesc)
-{
-	unsigned index = block/8;
-	uint8_t mask = ((uint8_t)1)<<(block%8);
+void freemap_blockinuse(uint32_t block, blockusage_t how, uint32_t howdesc) {
+	unsigned index = block / 8;
+	uint8_t mask = ((uint8_t) 1) << (block % 8);
 
-	if (tofreedata[index] & mask) {
+	if(tofreedata[index] & mask) {
 		/* really using the block, don't free it */
 		tofreedata[index] &= ~mask;
 	}
 
-	if (freemapdata[index] & mask) {
-		warnx("Block %lu (used as %s) already in use! (NOT FIXED)",
-		      (unsigned long) block, blockusagestr(how, howdesc));
+	if(freemapdata[index] & mask) {
+		warnx("Block %lu (used as %s) already in use! (NOT FIXED)", (unsigned long) block, blockusagestr(how, howdesc));
 		setbadness(EXIT_UNRECOV);
 	}
 
 	freemapdata[index] |= mask;
 
-	if (how != B_PASTEND) {
-		blocksinuse++;
-	}
+	if(how != B_PASTEND) { blocksinuse++; }
 }
 
 /*
@@ -158,17 +125,15 @@ freemap_blockinuse(uint32_t block, blockusage_t how, uint32_t howdesc)
  * original usage to be something we are dropping, e.g. if a truncate
  * (to a nonzero length > INOMAX_D) got partially completed.
  */
-void
-freemap_blockfree(uint32_t block)
-{
-	unsigned index = block/8;
-	uint8_t mask = ((uint8_t)1)<<(block%8);
+void freemap_blockfree(uint32_t block) {
+	unsigned index = block / 8;
+	uint8_t mask = ((uint8_t) 1) << (block % 8);
 
-	if (tofreedata[index] & mask) {
+	if(tofreedata[index] & mask) {
 		/* already marked to free once, ignore */
 		return;
 	}
-	if (freemapdata[index] & mask) {
+	if(freemapdata[index] & mask) {
 		/* block is used elsewhere, ignore */
 		return;
 	}
@@ -178,15 +143,12 @@ freemap_blockfree(uint32_t block)
 /*
  * Count the number of bits set.
  */
-static
-int
-countbits(uint8_t val)
-{
+static int countbits(uint8_t val) {
 	uint8_t x;
-	int ct=0;
+	int ct = 0;
 
-	for (x=1; x; x<<=1) {
-		if (val & x) ct++;
+	for(x = 1; x; x <<= 1) {
+		if(val & x) ct++;
 	}
 	return ct;
 }
@@ -198,19 +160,14 @@ countbits(uint8_t val)
  * byte offset within that block; VAL is the byte value; WHAT is a
  * string indicating what happened.
  */
-static
-void
-reportfreemap(uint32_t mapblock, uint32_t byte, uint8_t val, const char *what)
-{
+static void reportfreemap(uint32_t mapblock, uint32_t byte, uint8_t val, const char *what) {
 	uint8_t x, y;
 	uint32_t blocknum;
 
-	for (x=1, y=0; x; x<<=1, y++) {
-		if (val & x) {
-			blocknum = mapblock*SFS_BITSPERBLOCK +
-				byte*CHAR_BIT + y;
-			warnx("Block %lu erroneously shown %s in freemap",
-			      (unsigned long) blocknum, what);
+	for(x = 1, y = 0; x; x <<= 1, y++) {
+		if(val & x) {
+			blocknum = mapblock * SFS_BITSPERBLOCK + byte * CHAR_BIT + y;
+			warnx("Block %lu erroneously shown %s in freemap", (unsigned long) blocknum, what);
 		}
 	}
 }
@@ -221,33 +178,29 @@ reportfreemap(uint32_t mapblock, uint32_t byte, uint8_t val, const char *what)
  * This is called after (at the end of) pass 1, when we've recursively
  * found all the reachable blocks and marked them.
  */
-void
-freemap_check(void)
-{
+void freemap_check(void) {
 	uint8_t actual[SFS_BLOCKSIZE], *expected, *tofree, tmp;
-	uint32_t alloccount=0, freecount=0, i, j;
+	uint32_t alloccount = 0, freecount = 0, i, j;
 	int bchanged;
 	uint32_t bitblocks;
 
 	bitblocks = sb_freemapblocks();
 
-	for (i=0; i<bitblocks; i++) {
+	for(i = 0; i < bitblocks; i++) {
 		sfs_readfreemapblock(i, actual);
-		expected = freemapdata + i*SFS_BLOCKSIZE;
-		tofree = tofreedata + i*SFS_BLOCKSIZE;
+		expected = freemapdata + i * SFS_BLOCKSIZE;
+		tofree = tofreedata + i * SFS_BLOCKSIZE;
 		bchanged = 0;
 
-		for (j=0; j<SFS_BLOCKSIZE; j++) {
+		for(j = 0; j < SFS_BLOCKSIZE; j++) {
 			/* we shouldn't have blocks marked both ways */
-			assert((expected[j] & tofree[j])==0);
+			assert((expected[j] & tofree[j]) == 0);
 
 			/* what's there is what should be there */
-			if (actual[j] == expected[j]) {
-				continue;
-			}
+			if(actual[j] == expected[j]) { continue; }
 
 			/* what's there is what should be there modulo frees */
-			if (actual[j] == (expected[j] | tofree[j])) {
+			if(actual[j] == (expected[j] | tofree[j])) {
 				actual[j] = expected[j];
 				bchanged = 1;
 				continue;
@@ -259,21 +212,17 @@ freemap_check(void)
 			actual[j] &= ~tofree[j];
 
 			/* are we short any? */
-			if ((actual[j] & expected[j]) != expected[j]) {
+			if((actual[j] & expected[j]) != expected[j]) {
 				tmp = expected[j] & ~actual[j];
 				alloccount += countbits(tmp);
-				if (tmp != 0) {
-					reportfreemap(i, j, tmp, "free");
-				}
+				if(tmp != 0) { reportfreemap(i, j, tmp, "free"); }
 			}
 
 			/* do we have any extra? */
-			if ((actual[j] & expected[j]) != actual[j]) {
+			if((actual[j] & expected[j]) != actual[j]) {
 				tmp = actual[j] & ~expected[j];
 				freecount += countbits(tmp);
-				if (tmp != 0) {
-					reportfreemap(i, j, tmp, "allocated");
-				}
+				if(tmp != 0) { reportfreemap(i, j, tmp, "allocated"); }
 			}
 
 			/* set it to what it should be */
@@ -282,19 +231,15 @@ freemap_check(void)
 		}
 
 		/* write the block back if necessary */
-		if (bchanged) {
-			sfs_writefreemapblock(i, actual);
-		}
+		if(bchanged) { sfs_writefreemapblock(i, actual); }
 	}
 
-	if (alloccount > 0) {
-		warnx("%lu blocks erroneously shown free in freemap (fixed)",
-		      (unsigned long) alloccount);
+	if(alloccount > 0) {
+		warnx("%lu blocks erroneously shown free in freemap (fixed)", (unsigned long) alloccount);
 		setbadness(EXIT_RECOV);
 	}
-	if (freecount > 0) {
-		warnx("%lu blocks erroneously shown used in freemap (fixed)",
-		      (unsigned long) freecount);
+	if(freecount > 0) {
+		warnx("%lu blocks erroneously shown used in freemap (fixed)", (unsigned long) freecount);
 		setbadness(EXIT_RECOV);
 	}
 }
@@ -303,8 +248,6 @@ freemap_check(void)
  * Return the total number of blocks in use, which we count during
  * pass 1.
  */
-unsigned long
-freemap_blocksused(void)
-{
+unsigned long freemap_blocksused(void) {
 	return blocksinuse;
 }

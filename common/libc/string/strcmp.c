@@ -33,8 +33,8 @@
  */
 
 #ifdef _KERNEL
-#include <types.h>
 #include <lib.h>
+#include <types.h>
 #else
 #include <string.h>
 #endif
@@ -44,9 +44,7 @@
  * sort order.
  */
 
-int
-strcmp(const char *a, const char *b)
-{
+int strcmp(const char *a, const char *b) {
 	size_t i;
 
 	/*
@@ -63,9 +61,7 @@ strcmp(const char *a, const char *b)
 	 * B.
 	 */
 
-	for (i=0; a[i]!=0 && a[i]==b[i]; i++) {
-		/* nothing */
-	}
+	for(i = 0; a[i] != 0 && a[i] == b[i]; i++) { /* nothing */ }
 
 	/*
 	 * If A is greater than B, return 1. If A is less than B,
@@ -80,10 +76,9 @@ strcmp(const char *a, const char *b)
 	 *
 	 * The rules say we compare order in terms of *unsigned* char.
 	 */
-	if ((unsigned char)a[i] > (unsigned char)b[i]) {
+	if((unsigned char) a[i] > (unsigned char) b[i]) {
 		return 1;
-	}
-	else if (a[i] == b[i]) {
+	} else if(a[i] == b[i]) {
 		return 0;
 	}
 	return -1;

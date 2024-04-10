@@ -36,12 +36,12 @@
  *    should survive this.
  */
 
+#include <err.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 
 /* Larger than physical memory */
-#define SIZE  (144*1024)
+#define SIZE (144 * 1024)
 
 
 /*
@@ -54,50 +54,37 @@
  * Also, quicksort has somewhat more interesting memory usage patterns.
  */
 
-static
-void
-sort(int *arr, int size)
-{
+static void sort(int *arr, int size) {
 	static int tmp[SIZE];
 	int pivot, i, j, k;
 
-	if (size<2) {
-		return;
-	}
+	if(size < 2) { return; }
 
-	pivot = size/2;
+	pivot = size / 2;
 	sort(arr, pivot);
-	sort(&arr[pivot], size-pivot);
+	sort(&arr[pivot], size - pivot);
 
 	i = 0;
 	j = pivot;
 	k = 0;
-	while (i<pivot && j<size) {
-		if (arr[i] < arr[j]) {
+	while(i < pivot && j < size) {
+		if(arr[i] < arr[j]) {
 			tmp[k++] = arr[i++];
-		}
-		else {
+		} else {
 			tmp[k++] = arr[j++];
 		}
 	}
-	while (i<pivot) {
-		tmp[k++] = arr[i++];
-	}
-	while (j<size) {
-		tmp[k++] = arr[j++];
-	}
+	while(i < pivot) { tmp[k++] = arr[i++]; }
+	while(j < size) { tmp[k++] = arr[j++]; }
 
-	memcpy(arr, tmp, size*sizeof(int));
+	memcpy(arr, tmp, size * sizeof(int));
 }
 
 ////////////////////////////////////////////////////////////
 
 static int A[SIZE];
 
-static
-void
-initarray(void)
-{
+static void initarray(void) {
 	int i;
 
 	/*
@@ -105,29 +92,19 @@ initarray(void)
 	 */
 	srandom(533);
 
-	for (i = 0; i < SIZE; i++) {
-		A[i] = random();
-	}
+	for(i = 0; i < SIZE; i++) { A[i] = random(); }
 }
 
-static
-void
-check(void)
-{
+static void check(void) {
 	int i;
 
-	for (i=0; i<SIZE-1; i++) {
-		if (A[i] > A[i+1]) {
-			errx(1, "Failed: A[%d] is %d, A[%d] is %d",
-			     i, A[i], i+1, A[i+1]);
-		}
+	for(i = 0; i < SIZE - 1; i++) {
+		if(A[i] > A[i + 1]) { errx(1, "Failed: A[%d] is %d, A[%d] is %d", i, A[i], i + 1, A[i + 1]); }
 	}
 	warnx("Passed.");
 }
 
-int
-main(void)
-{
+int main(void) {
 	initarray();
 	sort(A, SIZE);
 	check();

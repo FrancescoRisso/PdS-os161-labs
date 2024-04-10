@@ -27,14 +27,14 @@
  * SUCH DAMAGE.
  */
 
-#include <types.h>
+#include <copyinout.h>
+#include <current.h>
 #include <kern/errno.h>
 #include <lib.h>
 #include <setjmp.h>
 #include <thread.h>
-#include <current.h>
+#include <types.h>
 #include <vm.h>
-#include <copyinout.h>
 
 /*
  * User/kernel memory copying functions.
@@ -95,10 +95,7 @@
  * We use the C standard function longjmp() to teleport up the call
  * stack to where setjmp() was called. At that point we return EFAULT.
  */
-static
-void
-copyfail(void)
-{
+static void copyfail(void) {
 	longjmp(curthread->t_machdep.tm_copyjmp, 1);
 }
 
@@ -113,28 +110,25 @@ copyfail(void)
  *
  * Assumes userspace runs from 0 through USERSPACETOP-1.
  */
-static
-int
-copycheck(const_userptr_t userptr, size_t len, size_t *stoplen)
-{
+static int copycheck(const_userptr_t userptr, size_t len, size_t *stoplen) {
 	vaddr_t bot, top;
 
 	*stoplen = len;
 
 	bot = (vaddr_t) userptr;
-	top = bot+len-1;
+	top = bot + len - 1;
 
-	if (top < bot) {
+	if(top < bot) {
 		/* addresses wrapped around */
 		return EFAULT;
 	}
 
-	if (bot >= USERSPACETOP) {
+	if(bot >= USERSPACETOP) {
 		/* region is within the kernel */
 		return EFAULT;
 	}
 
-	if (top >= USERSPACETOP) {
+	if(top >= USERSPACETOP) {
 		/* region overlaps the kernel. adjust the max length. */
 		*stoplen = USERSPACETOP - bot;
 	}
@@ -149,17 +143,13 @@ copycheck(const_userptr_t userptr, size_t len, size_t *stoplen)
  * to kernel address DEST. We can use memcpy because it's protected by
  * the tm_badfaultfunc/copyfail logic.
  */
-int
-copyin(const_userptr_t usersrc, void *dest, size_t len)
-{
+int copyin(const_userptr_t usersrc, void *dest, size_t len) {
 	int result;
 	size_t stoplen;
 
 	result = copycheck(usersrc, len, &stoplen);
-	if (result) {
-		return result;
-	}
-	if (stoplen != len) {
+	if(result) { return result; }
+	if(stoplen != len) {
 		/* Single block, can't legally truncate it. */
 		return EFAULT;
 	}
@@ -167,12 +157,12 @@ copyin(const_userptr_t usersrc, void *dest, size_t len)
 	curthread->t_machdep.tm_badfaultfunc = copyfail;
 
 	result = setjmp(curthread->t_machdep.tm_copyjmp);
-	if (result) {
+	if(result) {
 		curthread->t_machdep.tm_badfaultfunc = NULL;
 		return EFAULT;
 	}
 
-	memcpy(dest, (const void *)usersrc, len);
+	memcpy(dest, (const void *) usersrc, len);
 
 	curthread->t_machdep.tm_badfaultfunc = NULL;
 	return 0;
@@ -185,17 +175,13 @@ copyin(const_userptr_t usersrc, void *dest, size_t len)
  * user-level address USERDEST. We can use memcpy because it's
  * protected by the tm_badfaultfunc/copyfail logic.
  */
-int
-copyout(const void *src, userptr_t userdest, size_t len)
-{
+int copyout(const void *src, userptr_t userdest, size_t len) {
 	int result;
 	size_t stoplen;
 
 	result = copycheck(userdest, len, &stoplen);
-	if (result) {
-		return result;
-	}
-	if (stoplen != len) {
+	if(result) { return result; }
+	if(stoplen != len) {
 		/* Single block, can't legally truncate it. */
 		return EFAULT;
 	}
@@ -203,12 +189,12 @@ copyout(const void *src, userptr_t userdest, size_t len)
 	curthread->t_machdep.tm_badfaultfunc = copyfail;
 
 	result = setjmp(curthread->t_machdep.tm_copyjmp);
-	if (result) {
+	if(result) {
 		curthread->t_machdep.tm_badfaultfunc = NULL;
 		return EFAULT;
 	}
 
-	memcpy((void *)userdest, src, len);
+	memcpy((void *) userdest, src, len);
 
 	curthread->t_machdep.tm_badfaultfunc = NULL;
 	return 0;
@@ -230,23 +216,17 @@ copyout(const void *src, userptr_t userdest, size_t len)
  * userspace. Thus in the latter case we return EFAULT, not
  * ENAMETOOLONG.
  */
-static
-int
-copystr(char *dest, const char *src, size_t maxlen, size_t stoplen,
-	size_t *gotlen)
-{
+static int copystr(char *dest, const char *src, size_t maxlen, size_t stoplen, size_t *gotlen) {
 	size_t i;
 
-	for (i=0; i<maxlen && i<stoplen; i++) {
+	for(i = 0; i < maxlen && i < stoplen; i++) {
 		dest[i] = src[i];
-		if (src[i] == 0) {
-			if (gotlen != NULL) {
-				*gotlen = i+1;
-			}
+		if(src[i] == 0) {
+			if(gotlen != NULL) { *gotlen = i + 1; }
 			return 0;
 		}
 	}
-	if (stoplen < maxlen) {
+	if(stoplen < maxlen) {
 		/* ran into user-kernel boundary */
 		return EFAULT;
 	}
@@ -262,26 +242,22 @@ copystr(char *dest, const char *src, size_t maxlen, size_t stoplen,
  * logic to protect against invalid addresses supplied by a user
  * process.
  */
-int
-copyinstr(const_userptr_t usersrc, char *dest, size_t len, size_t *actual)
-{
+int copyinstr(const_userptr_t usersrc, char *dest, size_t len, size_t *actual) {
 	int result;
 	size_t stoplen;
 
 	result = copycheck(usersrc, len, &stoplen);
-	if (result) {
-		return result;
-	}
+	if(result) { return result; }
 
 	curthread->t_machdep.tm_badfaultfunc = copyfail;
 
 	result = setjmp(curthread->t_machdep.tm_copyjmp);
-	if (result) {
+	if(result) {
 		curthread->t_machdep.tm_badfaultfunc = NULL;
 		return EFAULT;
 	}
 
-	result = copystr(dest, (const char *)usersrc, len, stoplen, actual);
+	result = copystr(dest, (const char *) usersrc, len, stoplen, actual);
 
 	curthread->t_machdep.tm_badfaultfunc = NULL;
 	return result;
@@ -295,26 +271,22 @@ copyinstr(const_userptr_t usersrc, char *dest, size_t len, size_t *actual)
  * logic to protect against invalid addresses supplied by a user
  * process.
  */
-int
-copyoutstr(const char *src, userptr_t userdest, size_t len, size_t *actual)
-{
+int copyoutstr(const char *src, userptr_t userdest, size_t len, size_t *actual) {
 	int result;
 	size_t stoplen;
 
 	result = copycheck(userdest, len, &stoplen);
-	if (result) {
-		return result;
-	}
+	if(result) { return result; }
 
 	curthread->t_machdep.tm_badfaultfunc = copyfail;
 
 	result = setjmp(curthread->t_machdep.tm_copyjmp);
-	if (result) {
+	if(result) {
 		curthread->t_machdep.tm_badfaultfunc = NULL;
 		return EFAULT;
 	}
 
-	result = copystr((char *)userdest, src, len, stoplen, actual);
+	result = copystr((char *) userdest, src, len, stoplen, actual);
 
 	curthread->t_machdep.tm_badfaultfunc = NULL;
 	return result;

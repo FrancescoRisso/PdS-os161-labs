@@ -38,16 +38,12 @@
  * Returns the length of the string printed.
  */
 
-int
-__puts(const char *str)
-{
+int __puts(const char *str) {
 	size_t len;
 	ssize_t ret;
 
 	len = strlen(str);
 	ret = write(STDOUT_FILENO, str, len);
-	if (ret == -1) {
-		return EOF;
-	}
+	if(ret == -1) { return EOF; }
 	return len;
 }
