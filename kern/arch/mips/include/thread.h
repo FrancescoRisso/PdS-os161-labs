@@ -40,8 +40,8 @@
 typedef void (*badfaultfunc_t)(void);
 
 struct thread_machdep {
-	badfaultfunc_t tm_badfaultfunc;	/* fault hook used by copyin/out */
-	jmp_buf tm_copyjmp;		/* longjmp area used by copyin/out */
+	badfaultfunc_t tm_badfaultfunc; /* fault hook used by copyin/out */
+	jmp_buf tm_copyjmp;             /* longjmp area used by copyin/out */
 };
 
 

@@ -34,20 +34,16 @@
  * Loops consuming CPU cycles.
  */
 
-int
-main(void)
-{
+int main(void) {
 	volatile int i;
 	volatile int k, l, m;
 
 	k = 1283;
 	l = 53;
-	for (i=0; i<15000000; i++) {
-		l = m + k;
-	}
+	for(i = 0; i < 15000000; i++) { l = m + k; }
 
 	// gcc 4.8 improperly demands this
-	(void)l;
+	(void) l;
 
 	return 0;
 }

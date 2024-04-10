@@ -38,10 +38,10 @@
  * This should really be replaced with a real hash, like MD5 or SHA-1.
  */
 
+#include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <err.h>
 
 #ifdef HOST
 #include "hostcompat.h"
@@ -49,9 +49,7 @@
 
 #define HASHP 104729
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	int fd;
 	char readbuf[1];
 	int j = 0;
@@ -60,19 +58,15 @@ main(int argc, char *argv[])
 	hostcompat_init(argc, argv);
 #endif
 
-	if (argc != 2) {
-		errx(1, "Usage: hash filename");
-	}
+	if(argc != 2) { errx(1, "Usage: hash filename"); }
 
 	fd = open(argv[1], O_RDONLY, 0664);
 
-	if (fd<0) {
-		err(1, "%s", argv[1]);
-	}
+	if(fd < 0) { err(1, "%s", argv[1]); }
 
-	for (;;) {
-		if (read(fd, readbuf, 1) <= 0) break;
-		j = ((j*8) + (int) readbuf[0]) % HASHP;
+	for(;;) {
+		if(read(fd, readbuf, 1) <= 0) break;
+		j = ((j * 8) + (int) readbuf[0]) % HASHP;
 	}
 
 	close(fd);

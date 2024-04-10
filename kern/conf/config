@@ -900,7 +900,7 @@ echo -n ' autoconf.h'
 # now, autoconf.c
 #
 
-echo '#include <types.h>' >> $ACC
+echo '#include <__includeTypes.h>' >> $ACC
 echo '#include <lib.h>' >> $ACC
 echo '#include "autoconf.h"' >> $ACC
 

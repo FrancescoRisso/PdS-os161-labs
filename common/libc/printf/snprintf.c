@@ -33,7 +33,7 @@
  */
 
 #ifdef _KERNEL
-#include <types.h>
+#include <__includeTypes.h>
 #include <lib.h>
 
 #else
@@ -70,19 +70,14 @@ typedef struct {
  * null-terminated.
  */
 
-static
-void
-__snprintf_send(void *mydata, const char *data, size_t len)
-{
+static void __snprintf_send(void *mydata, const char *data, size_t len) {
 	SNP *snp = mydata;
 	unsigned i;
 
 	/* For each character we're sent... */
-	for (i=0; i<len; i++) {
-
+	for(i = 0; i < len; i++) {
 		/* If we aren't past the length, */
-		if (snp->bufpos < snp->buflen) {
-
+		if(snp->bufpos < snp->buflen) {
 			/* store the character */
 			snp->buf[snp->bufpos] = data[i];
 
@@ -95,9 +90,7 @@ __snprintf_send(void *mydata, const char *data, size_t len)
 /*
  * The va_list version of snprintf.
  */
-int
-vsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
-{
+int vsnprintf(char *buf, size_t len, const char *fmt, va_list ap) {
 	int chars;
 	SNP snp;
 
@@ -109,11 +102,10 @@ vsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
 	 * of zero elsewhere.
 	 */
 	snp.buf = buf;
-	if (len==0) {
+	if(len == 0) {
 		snp.buflen = 0;
-	}
-	else {
-		snp.buflen = len-1;
+	} else {
+		snp.buflen = len - 1;
 	}
 	snp.bufpos = 0;
 
@@ -127,9 +119,7 @@ vsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
 	 * nothing will have been or should be written anyway, and buf
 	 * might even be NULL. (C99 explicitly endorses this possibility.)
 	 */
-	if (len > 0) {
-		buf[snp.bufpos] = 0;
-	}
+	if(len > 0) { buf[snp.bufpos] = 0; }
 
 	/*
 	 * Return the number of characters __vprintf processed.
@@ -144,9 +134,7 @@ vsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
 /*
  * snprintf - hand off to vsnprintf.
  */
-int
-snprintf(char *buf, size_t len, const char *fmt, ...)
-{
+int snprintf(char *buf, size_t len, const char *fmt, ...) {
 	int chars;
 	va_list ap;
 	va_start(ap, fmt);
@@ -154,4 +142,3 @@ snprintf(char *buf, size_t len, const char *fmt, ...)
 	va_end(ap);
 	return chars;
 }
-

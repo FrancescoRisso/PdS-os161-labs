@@ -32,10 +32,10 @@
  * usage: poisondisk disk-image
  */
 
+#include <err.h>
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 #ifdef HOST
 #include "hostcompat.h"
@@ -46,27 +46,18 @@
 #define POISON_BYTE 0xa9
 #define BLOCKSIZE 512
 
-static
-void
-poison(void)
-{
+static void poison(void) {
 	char buf[BLOCKSIZE];
 	off_t sectors, i;
 
 	memset(buf, POISON_BYTE, sizeof(buf));
 
 	sectors = diskblocks();
-	for (i=0; i<sectors; i++) {
-		diskwrite(buf, i);
-	}
+	for(i = 0; i < sectors; i++) { diskwrite(buf, i); }
 }
 
-int
-main(int argc, char *argv[])
-{
-	if (argc != 2) {
-		errx(1, "Usage: %s disk-image", argv[0]);
-	}
+int main(int argc, char *argv[]) {
+	if(argc != 2) { errx(1, "Usage: %s disk-image", argv[0]); }
 	opendisk(argv[1]);
 	poison();
 	closedisk();

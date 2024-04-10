@@ -31,8 +31,8 @@
 #define _STRING_H_
 
 #include <kern/types.h>
-#include <types/size_t.h>
 #include <sys/null.h>
+#include <types/size_t.h>
 
 /*
  * Standard C string functions.

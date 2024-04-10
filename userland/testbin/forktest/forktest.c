@@ -36,11 +36,11 @@
  * notably after implementing the virtual memory system.
  */
 
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 /*
  * This is used by all processes, to try to help make sure all
@@ -51,15 +51,10 @@ static volatile int mypid;
 /*
  * Helper function for fork that prints a warning on error.
  */
-static
-int
-dofork(void)
-{
+static int dofork(void) {
 	int pid;
 	pid = fork();
-	if (pid < 0) {
-		warn("fork");
-	}
+	if(pid < 0) { warn("fork"); }
 	return pid;
 }
 
@@ -68,22 +63,20 @@ dofork(void)
  * the pid into the data segment and read it back repeatedly, making
  * sure it's correct every time.
  */
-static
-void
-check(void)
-{
+static void check(void) {
 	int i;
 
 	mypid = getpid();
 
 	/* Make sure each fork has its own address space. */
-	for (i=0; i<800; i++) {
+	for(i = 0; i < 800; i++) {
 		volatile int seenpid;
 		seenpid = mypid;
-		if (seenpid != getpid()) {
-			errx(1, "pid mismatch (%d, should be %d) "
-			     "- your vm is broken!",
-			     seenpid, getpid());
+		if(seenpid != getpid()) {
+			errx(1,
+				"pid mismatch (%d, should be %d) "
+				"- your vm is broken!",
+				seenpid, getpid());
 		}
 	}
 }
@@ -97,29 +90,24 @@ check(void)
  * generated the current process; that means it's time to exit. Only
  * the parent of all the processes returns from the chain of dowaits.
  */
-static
-void
-dowait(int nowait, int pid)
-{
+static void dowait(int nowait, int pid) {
 	int x;
 
-	if (pid<0) {
+	if(pid < 0) {
 		/* fork in question failed; just return */
 		return;
 	}
-	if (pid==0) {
+	if(pid == 0) {
 		/* in the fork in question we were the child; exit */
 		exit(0);
 	}
 
-	if (!nowait) {
-		if (waitpid(pid, &x, 0)<0) {
+	if(!nowait) {
+		if(waitpid(pid, &x, 0) < 0) {
 			warn("waitpid");
-		}
-		else if (WIFSIGNALED(x)) {
+		} else if(WIFSIGNALED(x)) {
 			warnx("pid %d: signal %d", pid, WTERMSIG(x));
-		}
-		else if (WEXITSTATUS(x) != 0) {
+		} else if(WEXITSTATUS(x) != 0) {
 			warnx("pid %d: exit %d", pid, WEXITSTATUS(x));
 		}
 	}
@@ -128,10 +116,7 @@ dowait(int nowait, int pid)
 /*
  * Actually run the test.
  */
-static
-void
-test(int nowait)
-{
+static void test(int nowait) {
 	int pid0, pid1, pid2, pid3;
 	int depth = 0;
 
@@ -152,33 +137,25 @@ test(int nowait)
 	pid0 = dofork();
 	depth++;
 	putchar('A');
-	if (depth != 1) {
-		warnx("depth %d, should be 1", depth);
-	}
+	if(depth != 1) { warnx("depth %d, should be 1", depth); }
 	check();
 
 	pid1 = dofork();
 	depth++;
 	putchar('B');
-	if (depth != 2) {
-		warnx("depth %d, should be 2", depth);
-	}
+	if(depth != 2) { warnx("depth %d, should be 2", depth); }
 	check();
 
 	pid2 = dofork();
 	depth++;
 	putchar('C');
-	if (depth != 3) {
-		warnx("depth %d, should be 3", depth);
-	}
+	if(depth != 3) { warnx("depth %d, should be 3", depth); }
 	check();
 
 	pid3 = dofork();
 	depth++;
 	putchar('D');
-	if (depth != 4) {
-		warnx("depth %d, should be 4", depth);
-	}
+	if(depth != 4) { warnx("depth %d, should be 4", depth); }
 	check();
 
 	/*
@@ -193,17 +170,13 @@ test(int nowait)
 	putchar('\n');
 }
 
-int
-main(int argc, char *argv[])
-{
-	static const char expected[] =
-		"|----------------------------|\n";
-	int nowait=0;
+int main(int argc, char *argv[]) {
+	static const char expected[] = "|----------------------------|\n";
+	int nowait = 0;
 
-	if (argc==2 && !strcmp(argv[1], "-w")) {
-		nowait=1;
-	}
-	else if (argc!=1 && argc!=0) {
+	if(argc == 2 && !strcmp(argv[1], "-w")) {
+		nowait = 1;
+	} else if(argc != 1 && argc != 0) {
 		warnx("usage: forktest [-w]");
 		return 1;
 	}

@@ -31,29 +31,23 @@
  * Code for probe/attach of the emu device to lamebus.
  */
 
-#include <types.h>
-#include <lib.h>
-#include <lamebus/lamebus.h>
+#include <__includeTypes.h>
 #include <lamebus/emu.h>
+#include <lamebus/lamebus.h>
+#include <lib.h>
+
 #include "autoconf.h"
 
 /* Lowest revision we support */
-#define LOW_VERSION   1
+#define LOW_VERSION 1
 
-struct emu_softc *
-attach_emu_to_lamebus(int emuno, struct lamebus_softc *sc)
-{
+struct emu_softc *attach_emu_to_lamebus(int emuno, struct lamebus_softc *sc) {
 	struct emu_softc *es;
-	int slot = lamebus_probe(sc, LB_VENDOR_CS161, LBCS161_EMUFS,
-				 LOW_VERSION, NULL);
-	if (slot < 0) {
-		return NULL;
-	}
+	int slot = lamebus_probe(sc, LB_VENDOR_CS161, LBCS161_EMUFS, LOW_VERSION, NULL);
+	if(slot < 0) { return NULL; }
 
 	es = kmalloc(sizeof(struct emu_softc));
-	if (es==NULL) {
-		return NULL;
-	}
+	if(es == NULL) { return NULL; }
 
 	es->e_busdata = sc;
 	es->e_buspos = slot;

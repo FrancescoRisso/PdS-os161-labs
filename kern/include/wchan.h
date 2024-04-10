@@ -36,7 +36,7 @@
 
 
 struct spinlock; /* in spinlock.h */
-struct wchan; /* Opaque */
+struct wchan;    /* Opaque */
 
 /*
  * Create a wait channel. Use NAME as a symbolic name for the channel.

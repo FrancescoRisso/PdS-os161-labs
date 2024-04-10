@@ -27,27 +27,23 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
 
 #include "hostcompat.h"
 
 #ifdef NEED_NTOHLL
 
-uint64_t
-ntohll(uint64_t x)
-{
+uint64_t ntohll(uint64_t x) {
 	uint32_t x0, x1, y0, y1;
 
-	if (ntohl(1) == 1) {
-		return x;
-	}
+	if(ntohl(1) == 1) { return x; }
 
 	x0 = x & 0xffffffff;
 	y0 = ntohl(x0);
 	x1 = x >> 32;
 	y1 = ntohl(x1);
-	return ((uint64_t)y0 << 32) | y1;
+	return ((uint64_t) y0 << 32) | y1;
 }
 
 #endif

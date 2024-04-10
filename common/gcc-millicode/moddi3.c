@@ -42,21 +42,16 @@
  *
  * XXX	we assume a % b < 0 iff a < 0, but this is actually machine-dependent.
  */
-long long
-__moddi3(long long a, long long b)
-{
+long long __moddi3(long long a, long long b) {
 	unsigned long long ua, ub, ur;
 	int neg = 0;
 
 	ua = a;
 	ub = b;
 
-	if (a < 0)
-		ua = -ua, neg ^= 1;
-	if (b < 0)
-		ub = -ub;
-	(void)__qdivrem(ua, ub, &ur);
-	if (neg)
-		ur = -ur;
+	if(a < 0) ua = -ua, neg ^= 1;
+	if(b < 0) ub = -ub;
+	(void) __qdivrem(ua, ub, &ur);
+	if(neg) ur = -ur;
 	return (ur);
 }

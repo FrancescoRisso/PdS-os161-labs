@@ -30,30 +30,28 @@
 /*
  * Code for probe/attach of lscreen to LAMEbus.
  */
-#include <types.h>
-#include <lib.h>
+#include <__includeTypes.h>
 #include <lamebus/lamebus.h>
 #include <lamebus/lscreen.h>
+#include <lib.h>
+
 #include "autoconf.h"
 
 /* Lowest revision we support */
-#define LOW_VERSION   1
+#define LOW_VERSION 1
 /* Highest revision we support */
-#define HIGH_VERSION  1
+#define HIGH_VERSION 1
 
-struct lscreen_softc *
-attach_lscreen_to_lamebus(int lscreenno, struct lamebus_softc *sc)
-{
+struct lscreen_softc *attach_lscreen_to_lamebus(int lscreenno, struct lamebus_softc *sc) {
 	struct lscreen_softc *ls;
-	int slot = lamebus_probe(sc, LB_VENDOR_CS161, LBCS161_SCREEN,
-				 LOW_VERSION, HIGH_VERSION);
-	if (slot < 0) {
+	int slot = lamebus_probe(sc, LB_VENDOR_CS161, LBCS161_SCREEN, LOW_VERSION, HIGH_VERSION);
+	if(slot < 0) {
 		/* Not found */
 		return NULL;
 	}
 
 	ls = kmalloc(sizeof(struct lscreen_softc));
-	if (ls==NULL) {
+	if(ls == NULL) {
 		/* Out of memory */
 		return NULL;
 	}
