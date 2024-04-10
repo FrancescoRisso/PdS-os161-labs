@@ -455,3 +455,6 @@ optfile		hello	main/hello.c
 
 defoption	syscall_write
 optfile		syscall_write	/syscall/write.c
+
+defoption	syscall_read
+optfile		syscall_read	/syscall/read.c
