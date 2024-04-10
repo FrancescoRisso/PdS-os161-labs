@@ -27,22 +27,22 @@
  * SUCH DAMAGE.
  */
 
-#include "main.h"
-
 #include <assert.h>
-#include <err.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <err.h>
 
 #include "compat.h"
+
 #include "disk.h"
+#include "sfs.h"
+#include "sb.h"
 #include "freemap.h"
 #include "inode.h"
 #include "passes.h"
-#include "sb.h"
-#include "sfs.h"
+#include "main.h"
 
-static int badness = 0;
+static int badness=0;
 
 /*
  * Update the badness state. (codes are in main.h)
@@ -50,20 +50,28 @@ static int badness = 0;
  * The badness state only gets worse, and is ultimately the process
  * exit code.
  */
-void setbadness(int code) {
-	if(badness < code) { badness = code; }
+void
+setbadness(int code)
+{
+	if (badness < code) {
+		badness = code;
+	}
 }
 
 /*
  * Main.
  */
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+{
 #ifdef HOST
 	hostcompat_init(argc, argv);
 #endif
 
 	/* FUTURE: add -n option */
-	if(argc != 2) { errx(EXIT_USAGE, "Usage: sfsck device/diskfile"); }
+	if (argc!=2) {
+		errx(EXIT_USAGE, "Usage: sfsck device/diskfile");
+	}
 
 	opendisk(argv[1]);
 
@@ -85,19 +93,25 @@ int main(int argc, char **argv) {
 
 	closedisk();
 
-	warnx("%lu blocks used (of %lu); %lu directories; %lu files", freemap_blocksused(), (unsigned long) sb_totalblocks(), pass1_founddirs(),
-		pass1_foundfiles());
+	warnx("%lu blocks used (of %lu); %lu directories; %lu files",
+	      freemap_blocksused(), (unsigned long)sb_totalblocks(),
+	      pass1_founddirs(), pass1_foundfiles());
 
-	switch(badness) {
-		case EXIT_USAGE:
-		case EXIT_FATAL:
-		default:
-			/* not supposed to happen here */
-			assert(0);
-			break;
-		case EXIT_UNRECOV: warnx("WARNING - unrecoverable errors. Maybe try again?"); break;
-		case EXIT_RECOV: warnx("Caution - filesystem modified. Run again for luck."); break;
-		case EXIT_CLEAN: break;
+	switch (badness) {
+	    case EXIT_USAGE:
+	    case EXIT_FATAL:
+	    default:
+		/* not supposed to happen here */
+		assert(0);
+		break;
+	    case EXIT_UNRECOV:
+		warnx("WARNING - unrecoverable errors. Maybe try again?");
+		break;
+	    case EXIT_RECOV:
+		warnx("Caution - filesystem modified. Run again for luck.");
+		break;
+	    case EXIT_CLEAN:
+		break;
 	}
 
 	return badness;

@@ -38,16 +38,16 @@
  */
 
 #ifdef _KERNEL
-#include <lib.h>
 #include <types.h>
+#include <lib.h>
 #define assert KASSERT
 #else
 
+#include <sys/types.h>
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 #endif
 
 #include <stdarg.h>
@@ -67,9 +67,9 @@
  * Define a type that holds the longest signed integer we intend to support.
  */
 #ifdef USE_LONGLONG
-#define INTTYPE long long
+#define INTTYPE  long long
 #else
-#define INTTYPE long
+#define INTTYPE  long
 #endif
 
 
@@ -141,7 +141,10 @@ typedef struct {
  * We count the total length we send out so we can return it from __vprintf,
  * since that's what most printf-like functions want to return.
  */
-static void __pf_print(PF *pf, const char *txt, size_t len) {
+static
+void
+__pf_print(PF *pf, const char *txt, size_t len)
+{
 	pf->sendfunc(pf->clientdata, txt, len);
 	pf->charcount += len;
 }
@@ -149,7 +152,10 @@ static void __pf_print(PF *pf, const char *txt, size_t len) {
 /*
  * Reset the state for the next %-field.
  */
-static void __pf_endfield(PF *pf) {
+static
+void
+__pf_endfield(PF *pf)
+{
 	pf->in_pct = 0;
 	pf->size = INTSZ;
 	pf->num = 0;
@@ -171,47 +177,58 @@ static void __pf_endfield(PF *pf) {
  *    0-9         field width
  *    leading 0   pad with zeros instead of spaces
  */
-static void __pf_modifier(PF *pf, int ch) {
-	switch(ch) {
-		case '#': pf->altformat = 1; break;
-		case '-': pf->rightspc = 1; break;
-		case 'l':
-			if(pf->size == LONGSZ) {
+static
+void
+__pf_modifier(PF *pf, int ch)
+{
+	switch (ch) {
+	case '#':
+		pf->altformat = 1;
+		break;
+	case '-':
+		pf->rightspc = 1;
+		break;
+	case 'l':
+		if (pf->size==LONGSZ) {
 #ifdef USE_LONGLONG
-				pf->size = LLONGSZ;
+			pf->size = LLONGSZ;
 #endif
-			} else {
-				pf->size = LONGSZ;
-			}
-			break;
-		case 'z': pf->size = SIZETSZ; break;
-		case '0':
-			if(pf->spacing > 0) {
-				/*
-				 * Already seen some digits; this is part of the
-				 * field size.
-				 */
-				pf->spacing = pf->spacing * 10;
-			} else {
-				/*
-				 * Leading zero; set the padding character to 0.
-				 */
-				pf->fillchar = '0';
-			}
-			break;
-		default:
+		}
+		else {
+			pf->size = LONGSZ;
+		}
+		break;
+	case 'z':
+		pf->size = SIZETSZ;
+		break;
+	case '0':
+		if (pf->spacing>0) {
 			/*
-			 * Invalid characters should be filtered out by a
-			 * higher-level function, so if this assert goes off
-			 * it's our fault.
+			 * Already seen some digits; this is part of the
+			 * field size.
 			 */
-			assert(ch > '0' && ch <= '9');
+			pf->spacing = pf->spacing*10;
+		}
+		else {
+			/*
+			 * Leading zero; set the padding character to 0.
+			 */
+			pf->fillchar = '0';
+		}
+		break;
+	default:
+		/*
+		 * Invalid characters should be filtered out by a
+		 * higher-level function, so if this assert goes off
+		 * it's our fault.
+		 */
+		assert(ch>'0' && ch<='9');
 
-			/*
-			 * Got a digit; accumulate the field size.
-			 */
-			pf->spacing = pf->spacing * 10 + (ch - '0');
-			break;
+		/*
+		 * Got a digit; accumulate the field size.
+		 */
+		pf->spacing = pf->spacing*10 + (ch-'0');
+		break;
 	}
 }
 
@@ -220,8 +237,11 @@ static void __pf_modifier(PF *pf, int ch) {
  * in pf->num, according to the size recorded in pf->size and using
  * the numeric type specified by ch.
  */
-static void __pf_getnum(PF *pf, int ch) {
-	if(ch == 'p') {
+static
+void
+__pf_getnum(PF *pf, int ch)
+{
+	if (ch=='p') {
 		/*
 		 * Pointer.
 		 *
@@ -229,60 +249,63 @@ static void __pf_getnum(PF *pf, int ch) {
 		 * integer the same size as a pointer.
 		 */
 		pf->num = (uintptr_t) va_arg(pf->ap, void *);
-	} else if(ch == 'd') {
+	}
+	else if (ch=='d') {
 		/* signed integer */
-		INTTYPE signednum = 0;
-		switch(pf->size) {
-			case INTSZ:
-				/* %d */
-				signednum = va_arg(pf->ap, int);
-				break;
-			case LONGSZ:
-				/* %ld */
-				signednum = va_arg(pf->ap, long);
-				break;
+		INTTYPE signednum=0;
+		switch (pf->size) {
+		case INTSZ:
+			/* %d */
+			signednum = va_arg(pf->ap, int);
+			break;
+		case LONGSZ:
+			/* %ld */
+			signednum = va_arg(pf->ap, long);
+			break;
 #ifdef USE_LONGLONG
-			case LLONGSZ:
-				/* %lld */
-				signednum = va_arg(pf->ap, long long);
-				break;
+		case LLONGSZ:
+			/* %lld */
+			signednum = va_arg(pf->ap, long long);
+			break;
 #endif
-			case SIZETSZ:
-				/* %zd */
-				signednum = va_arg(pf->ap, ssize_t);
-				break;
+		case SIZETSZ:
+			/* %zd */
+			signednum = va_arg(pf->ap, ssize_t);
+			break;
 		}
 
 		/*
 		 * Check for negative numbers.
 		 */
-		if(signednum < 0) {
+		if (signednum < 0) {
 			pf->sign = -1;
 			pf->num = -signednum;
-		} else {
+		}
+		else {
 			pf->num = signednum;
 		}
-	} else {
+	}
+	else {
 		/* unsigned integer */
-		switch(pf->size) {
-			case INTSZ:
-				/* %u (or %o, %x) */
-				pf->num = va_arg(pf->ap, unsigned int);
-				break;
-			case LONGSZ:
-				/* %lu (or %lo, %lx) */
-				pf->num = va_arg(pf->ap, unsigned long);
-				break;
+		switch (pf->size) {
+		case INTSZ:
+			/* %u (or %o, %x) */
+			pf->num = va_arg(pf->ap, unsigned int);
+			break;
+		case LONGSZ:
+			/* %lu (or %lo, %lx) */
+			pf->num = va_arg(pf->ap, unsigned long);
+			break;
 #ifdef USE_LONGLONG
-			case LLONGSZ:
-				/* %llu, %llo, %llx */
-				pf->num = va_arg(pf->ap, unsigned long long);
-				break;
+		case LLONGSZ:
+			/* %llu, %llo, %llx */
+			pf->num = va_arg(pf->ap, unsigned long long);
+			break;
 #endif
-			case SIZETSZ:
-				/* %zu, %zo, %zx */
-				pf->num = va_arg(pf->ap, size_t);
-				break;
+		case SIZETSZ:
+			/* %zu, %zo, %zx */
+			pf->num = va_arg(pf->ap, size_t);
+			break;
 		}
 	}
 }
@@ -297,24 +320,40 @@ static void __pf_getnum(PF *pf, int ch) {
  * If the "alternate format" was requested, or always for pointers,
  * note to print the C prefix for the type.
  */
-static void __pf_setbase(PF *pf, int ch) {
-	switch(ch) {
-		case 'd':
-		case 'u': pf->base = 10; break;
-		case 'x':
-		case 'p': pf->base = 16; break;
-		case 'o': pf->base = 8; break;
+static
+void
+__pf_setbase(PF *pf, int ch)
+{
+	switch (ch) {
+	case 'd':
+	case 'u':
+		pf->base = 10;
+		break;
+	case 'x':
+	case 'p':
+		pf->base = 16;
+		break;
+	case 'o':
+		pf->base = 8;
+		break;
 	}
-	if(pf->altformat || ch == 'p') { pf->baseprefix = 1; }
+	if (pf->altformat || ch=='p') {
+		pf->baseprefix = 1;
+	}
 }
 
 /*
  * Function to print "spc" instances of the fill character.
  */
-static void __pf_fill(PF *pf, int spc) {
+static
+void
+__pf_fill(PF *pf, int spc)
+{
 	char f = pf->fillchar;
 	int i;
-	for(i = 0; i < spc; i++) { __pf_print(pf, &f, 1); }
+	for (i=0; i<spc; i++) {
+		__pf_print(pf, &f, 1);
+	}
 }
 
 /*
@@ -323,33 +362,45 @@ static void __pf_fill(PF *pf, int spc) {
  * and the other is the sign) get printed *after* space padding but
  * *before* zero padding, if padding is on the left.
  */
-static void __pf_printstuff(PF *pf, const char *prefix, const char *prefix2, const char *stuff) {
+static
+void
+__pf_printstuff(PF *pf,
+		const char *prefix, const char *prefix2,
+		const char *stuff)
+{
 	/* Total length to print. */
-	int len = strlen(prefix) + strlen(prefix2) + strlen(stuff);
+	int len = strlen(prefix)+strlen(prefix2)+strlen(stuff);
 
 	/* Get field width and compute amount of padding in "spc". */
 	int spc = pf->spacing;
-	if(spc > len) {
+	if (spc > len) {
 		spc -= len;
-	} else {
+	}
+	else {
 		spc = 0;
 	}
 
 	/* If padding on left and the fill char is not 0, pad first. */
-	if(spc > 0 && pf->rightspc == 0 && pf->fillchar != '0') { __pf_fill(pf, spc); }
+	if (spc > 0 && pf->rightspc==0 && pf->fillchar!='0') {
+		__pf_fill(pf, spc);
+	}
 
 	/* Print the prefixes. */
 	__pf_print(pf, prefix, strlen(prefix));
 	__pf_print(pf, prefix2, strlen(prefix2));
 
 	/* If padding on left and the fill char *is* 0, pad here. */
-	if(spc > 0 && pf->rightspc == 0 && pf->fillchar == '0') { __pf_fill(pf, spc); }
+	if (spc > 0 && pf->rightspc==0 && pf->fillchar=='0') {
+		__pf_fill(pf, spc);
+	}
 
 	/* Print the actual string. */
 	__pf_print(pf, stuff, strlen(stuff));
 
 	/* If padding on the right, pad afterwards. */
-	if(spc > 0 && pf->rightspc != 0) { __pf_fill(pf, spc); }
+	if (spc > 0 && pf->rightspc!=0) {
+		__pf_fill(pf, spc);
+	}
 }
 
 /*
@@ -359,18 +410,21 @@ static void __pf_printstuff(PF *pf, const char *prefix, const char *prefix2, con
  * NUMBER_BUF_SIZE is set so that the longest number string we can
  * generate (a long long printed in octal) will fit. See above.
  */
-static void __pf_printnum(PF *pf) {
+static
+void
+__pf_printnum(PF *pf)
+{
 	/* Digits to print with. */
 	const char *const digits = "0123456789abcdef";
 
-	char buf[NUMBER_BUF_SIZE]; /* Accumulation buffer for string. */
-	char *x;                   /* Current pointer into buf. */
-	unsigned INTTYPE xnum;     /* Current value to print. */
-	const char *bprefix;       /* Base prefix (0, 0x, or nothing) */
-	const char *sprefix;       /* Sign prefix (- or nothing) */
+	char buf[NUMBER_BUF_SIZE];   /* Accumulation buffer for string. */
+	char *x;                     /* Current pointer into buf. */
+	unsigned INTTYPE xnum;       /* Current value to print. */
+	const char *bprefix;         /* Base prefix (0, 0x, or nothing) */
+	const char *sprefix;         /* Sign prefix (- or nothing) */
 
 	/* Start in the last slot of the buffer. */
-	x = buf + sizeof(buf) - 1;
+	x = buf+sizeof(buf)-1;
 
 	/* Insert null terminator. */
 	*x-- = 0;
@@ -402,7 +456,7 @@ static void __pf_printnum(PF *pf) {
 		/*
 		 * If xnum hits 0 there's no more number left.
 		 */
-	} while(xnum > 0);
+	} while (xnum > 0);
 
 	/*
 	 * x points to the *next* slot in the buffer to use.
@@ -415,11 +469,13 @@ static void __pf_printnum(PF *pf) {
 	/*
 	 * If a base prefix was requested, select it.
 	 */
-	if(pf->baseprefix && pf->base == 16) {
+	if (pf->baseprefix && pf->base==16) {
 		bprefix = "0x";
-	} else if(pf->baseprefix && pf->base == 8) {
+	}
+	else if (pf->baseprefix && pf->base==8) {
 		bprefix = "0";
-	} else {
+	}
+	else {
 		bprefix = "";
 	}
 
@@ -437,29 +493,35 @@ static void __pf_printnum(PF *pf) {
 /*
  * Process a single character out of the format string.
  */
-static void __pf_send(PF *pf, int ch) {
+static
+void
+__pf_send(PF *pf, int ch)
+{
 	/* Cannot get NULs here. */
-	assert(ch != 0);
+	assert(ch!=0);
 
-	if(pf->in_pct == 0 && ch != '%') {
+	if (pf->in_pct==0 && ch!='%') {
 		/*
 		 * Not currently in a format, and not a %. Just send
 		 * the character on through.
 		 */
 		char c = ch;
 		__pf_print(pf, &c, 1);
-	} else if(pf->in_pct == 0) {
+	}
+	else if (pf->in_pct==0) {
 		/*
 		 * Not in a format, but got a %. Start a format.
 		 */
 		pf->in_pct = 1;
-	} else if(strchr("#-lz0123456789", ch)) {
+	}
+	else if (strchr("#-lz0123456789", ch)) {
 		/*
 		 * These are the modifier characters we recognize.
 		 * (These are the characters between the % and the type.)
 		 */
 		__pf_modifier(pf, ch);
-	} else if(strchr("doupx", ch)) {
+	}
+	else if (strchr("doupx", ch)) {
 		/*
 		 * Integer types.
 		 * Fetch the number, set the base, print it, then
@@ -469,24 +531,29 @@ static void __pf_send(PF *pf, int ch) {
 		__pf_setbase(pf, ch);
 		__pf_printnum(pf);
 		__pf_endfield(pf);
-	} else if(ch == 's') {
+	}
+	else if (ch=='s') {
 		/*
 		 * Print a string.
 		 */
 		const char *str = va_arg(pf->ap, const char *);
-		if(str == NULL) { str = "(null)"; }
+		if (str==NULL) {
+			str = "(null)";
+		}
 		__pf_printstuff(pf, "", "", str);
 		__pf_endfield(pf);
-	} else {
+	}
+	else {
 		/*
 		 * %%, %c, or illegal character.
 		 * Illegal characters are printed like %%.
 		 * for example, %5k prints "    k".
 		 */
 		char x[2];
-		if(ch == 'c') {
+		if (ch=='c') {
 			x[0] = va_arg(pf->ap, int);
-		} else {
+		}
+		else {
 			x[0] = ch;
 		}
 		x[1] = 0;
@@ -500,7 +567,10 @@ static void __pf_send(PF *pf, int ch) {
  * Create and initialize a printf state object,
  * then send it each character from the format string.
  */
-int __vprintf(void (*func)(void *clientdata, const char *str, size_t len), void *clientdata, const char *format, va_list ap) {
+int
+__vprintf(void (*func)(void *clientdata, const char *str, size_t len),
+	  void *clientdata, const char *format, va_list ap)
+{
 	PF pf;
 	int i;
 
@@ -514,7 +584,9 @@ int __vprintf(void (*func)(void *clientdata, const char *str, size_t len), void 
 	pf.charcount = 0;
 	__pf_endfield(&pf);
 
-	for(i = 0; format[i]; i++) { __pf_send(&pf, format[i]); }
+	for (i=0; format[i]; i++) {
+		__pf_send(&pf, format[i]);
+	}
 
 	return pf.charcount;
 }

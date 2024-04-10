@@ -36,34 +36,41 @@
  * assignment.
  */
 
-#include <err.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 static char buffer[8192 + 1];
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[])
+{
 	const char *filename;
 	char *s;
 	size_t i, size, chunksize, offset;
 	ssize_t len;
 	int fd;
 
-	if(argc != 3) {
+	if (argc != 3) {
 		warnx("Usage: bigfile <filename> <size>");
 		errx(1, "   or: bigfile <filename> <size>/<chunksize>");
 	}
 
 	filename = argv[1];
 	s = strchr(argv[2], '/');
-	if(s != NULL) {
+	if (s != NULL) {
 		*s++ = 0;
 		chunksize = atoi(s);
-		if(chunksize >= sizeof(buffer)) { chunksize = sizeof(buffer) - 1; }
-		if(chunksize == 0) { errx(1, "Really?"); }
-	} else {
+		if (chunksize >= sizeof(buffer)) {
+			chunksize = sizeof(buffer) - 1;
+		}
+		if (chunksize == 0) {
+			errx(1, "Really?");
+		}
+	}
+	else {
 		chunksize = 10;
 	}
 	size = atoi(argv[2]);
@@ -71,21 +78,26 @@ int main(int argc, char *argv[]) {
 	/* round size up */
 	size = ((size + chunksize - 1) / chunksize) * chunksize;
 
-	printf("Creating a file of size %d in %d-byte chunks\n", size, chunksize);
+	printf("Creating a file of size %d in %d-byte chunks\n",
+	       size, chunksize);
 
-	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC);
-	if(fd < 0) { err(1, "%s: create", filename); }
+	fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC);
+	if (fd < 0) {
+		err(1, "%s: create", filename);
+	}
 
-	i = 0;
-	while(i < size) {
+	i=0;
+	while (i<size) {
 		snprintf(buffer, sizeof(buffer), "%d\n", i);
-		if(strlen(buffer) < chunksize) {
+		if (strlen(buffer) < chunksize) {
 			offset = chunksize - strlen(buffer);
-			memmove(buffer + offset, buffer, strlen(buffer) + 1);
+			memmove(buffer + offset, buffer, strlen(buffer)+1);
 			memset(buffer, ' ', offset);
 		}
 		len = write(fd, buffer, strlen(buffer));
-		if(len < 0) { err(1, "%s: write", filename); }
+		if (len<0) {
+			err(1, "%s: write", filename);
+		}
 		i += len;
 	}
 

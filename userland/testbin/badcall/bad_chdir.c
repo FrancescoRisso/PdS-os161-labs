@@ -31,13 +31,16 @@
  * Invalid calls to chdir()
  */
 
-#include <err.h>
-#include <errno.h>
 #include <unistd.h>
+#include <errno.h>
+#include <err.h>
 
 #include "test.h"
 
-static void chdir_empty(void) {
+static
+void
+chdir_empty(void)
+{
 	int rv;
 
 	/*
@@ -49,7 +52,10 @@ static void chdir_empty(void) {
 	report_check2(rv, errno, EINVAL, 0);
 }
 
-void test_chdir(void) {
+void
+test_chdir(void)
+{
 	test_chdir_path();
 	chdir_empty();
 }
+

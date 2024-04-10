@@ -31,30 +31,38 @@
  * Invalid calls to dup2
  */
 
-#include <err.h>
-#include <errno.h>
-#include <limits.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
+#include <limits.h>
+#include <errno.h>
+#include <err.h>
 
 #include "config.h"
 #include "test.h"
 
-static void dup2_fd2(int fd, const char *desc) {
+static
+void
+dup2_fd2(int fd, const char *desc)
+{
 	int rv;
 
 	report_begin("%s", desc);
 	rv = dup2(STDIN_FILENO, fd);
 	report_check(rv, errno, EBADF);
 
-	if(rv != -1) { close(fd); /* just in case */ }
+	if (rv != -1) {
+		close(fd);	/* just in case */
+	}
 }
 
-static void dup2_self(void) {
+static
+void
+dup2_self(void)
+{
 	struct stat sb;
 	int rv;
 	int testfd;
@@ -65,7 +73,7 @@ static void dup2_self(void) {
 	report_begin("copying stdin to test with");
 
 	rv = dup2(STDIN_FILENO, testfd);
-	if(rv == -1) {
+	if (rv == -1) {
 		report_result(rv, errno);
 		report_aborted();
 		return;
@@ -73,33 +81,40 @@ static void dup2_self(void) {
 
 	report_begin("dup2 to same fd");
 	rv = dup2(testfd, testfd);
-	if(rv == testfd) {
+	if (rv == testfd) {
 		report_passed();
-	} else if(rv < 0) {
+	}
+	else if (rv<0) {
 		report_result(rv, errno);
 		report_failure();
-	} else {
+	}
+	else {
 		report_warnx("returned %d instead", rv);
 		report_failure();
 	}
 
 	report_begin("fstat fd after dup2 to itself");
 	rv = fstat(testfd, &sb);
-	if(errno == ENOSYS) { report_saw_enosys(); }
+	if (errno == ENOSYS) {
+		report_saw_enosys();
+	}
 	report_result(rv, errno);
-	if(rv == 0) {
+	if (rv==0) {
 		report_passed();
-	} else if(errno != ENOSYS) {
+	}
+	else if (errno != ENOSYS) {
 		report_failure();
-	} else {
+	}
+	else {
 		report_skipped();
 		/* no support for fstat; try lseek */
 		report_begin("lseek fd after dup2 to itself");
 		rv = lseek(testfd, 0, SEEK_CUR);
 		report_result(rv, errno);
-		if(rv == 0 || (rv == -1 && errno == ESPIPE)) {
+		if (rv==0 || (rv==-1 && errno==ESPIPE)) {
 			report_passed();
-		} else {
+		}
+		else {
 			report_failure();
 		}
 	}
@@ -107,7 +122,9 @@ static void dup2_self(void) {
 	close(testfd);
 }
 
-void test_dup2(void) {
+void
+test_dup2(void)
+{
 	/* This does the first fd. */
 	test_dup2_fd();
 

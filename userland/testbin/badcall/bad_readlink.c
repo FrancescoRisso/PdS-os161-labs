@@ -31,18 +31,21 @@
  * readlink
  */
 
-#include <errno.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "test.h"
 
-static void readlink_file(void) {
+static
+void
+readlink_file(void)
+{
 	char buf[128];
 	int fd, rv;
 
 	report_begin("readlink on file");
 	fd = open_testfile("the question contains an invalid assumption");
-	if(fd < 0) {
+	if (fd<0) {
 		report_aborted();
 		return;
 	}
@@ -52,7 +55,10 @@ static void readlink_file(void) {
 	remove(TESTFILE);
 }
 
-static void readlink_dir(void) {
+static
+void
+readlink_dir(void)
+{
 	char buf[128];
 	int rv;
 
@@ -61,7 +67,10 @@ static void readlink_dir(void) {
 	report_check(rv, errno, EISDIR);
 }
 
-static void readlink_empty(void) {
+static
+void
+readlink_empty(void)
+{
 	char buf[128];
 	int rv;
 
@@ -70,7 +79,9 @@ static void readlink_empty(void) {
 	report_check2(rv, errno, EISDIR, EINVAL);
 }
 
-void test_readlink(void) {
+void
+test_readlink(void)
+{
 	test_readlink_path();
 	test_readlink_buf();
 
@@ -78,3 +89,4 @@ void test_readlink(void) {
 	readlink_dir();
 	readlink_empty();
 }
+

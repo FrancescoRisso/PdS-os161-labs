@@ -42,14 +42,14 @@
 #include <unistd.h>
 
 #define NEWLINE 012
-#define EMPTY 0
-#define X_PLAYER 1
-#define O_PLAYER 2
-#define X_MARKER 1
-#define O_MARKER 2
-#define DIM 3
-#define DIMCHAR "2"
-#define MAXSTRING 100
+#define	EMPTY		0
+#define X_PLAYER	1
+#define	O_PLAYER	2
+#define X_MARKER	1
+#define	O_MARKER	2
+#define DIM		3
+#define	DIMCHAR		"2"
+#define MAXSTRING	100
 
 typedef enum { FALSE, TRUE } bool;
 
@@ -58,7 +58,7 @@ bool ask_yesno(const char *msg);
 bool do_move(int player);
 void initialize_board(void);
 bool is_win(int x, int y);
-int read_string(char *buf, int length);
+int  read_string(char *buf, int length);
 void print_board(void);
 void print_instructions(void);
 bool win_column(int y, int marker);
@@ -75,31 +75,35 @@ int board[DIM][DIM];
 
 /* Console I/O routines */
 
-int main(void) {
+int
+main(void)
+{
 	bool win = FALSE;
 	int move, max_moves;
 	int player;
 
 	print_instructions();
-	max_moves = DIM * DIM; /* Maximum number of moves in a game */
+	max_moves = DIM * DIM;	/* Maximum number of moves in a game */
 
-	while(TRUE) {
+	while (TRUE) {
 		initialize_board();
-		for(move = 1; move <= max_moves; move++) {
+		for (move = 1; move <= max_moves; move++) {
 			player = move % 2 == 0 ? 2 : 1;
 			win = do_move(player);
 			print_board();
-			if(win) {
+			if (win) {
 				printf("Player %d, you WON!\n\n", player);
-				break; /* out of for loop */
+				break;		/* out of for loop */
 			}
 		}
 		/*
 		 * If we got here by falling through the loop, then it is a
 		 * tie game.
 		 */
-		if(!win) printf("Tie Game!\n\n");
-		if(!ask_yesno("Do you wish to play again?")) break; /* out of while loop */
+		if (!win)
+			printf("Tie Game!\n\n");
+		if (!ask_yesno("Do you wish to play again?"))
+			break;			/* out of while loop */
 	}
 	return 0;
 }
@@ -114,7 +118,9 @@ int main(void) {
  * Error
  *	None
  */
-void print_instructions(void) {
+void
+print_instructions(void)
+{
 	printf("Welcome to tic-tac-toe!\n");
 	printf("Player 1 always plays X and player 2 always play O\n");
 	printf("Good luck!\n\n\n");
@@ -138,11 +144,11 @@ print_board(void)
 	/* Print labels across the top */
 	printf("\n    0  1  2\n");
 
-	for(i = 0; i < DIM; i++) {
+	for (i = 0; i < DIM; i++) {
 		/* Print row labels */
 		printf(" %d ", i);
-		for(j = 0; j < DIM; j++) {
-			switch(board[i][j]) {
+		for (j = 0; j < DIM; j++) {
+			switch (board[i][j]) {
 				case EMPTY: printf("   "); break;
 				case X_MARKER: printf(" X "); break;
 				case O_MARKER: printf(" O "); break;
@@ -169,16 +175,19 @@ print_board(void)
  * Error
  *	None
  */
-bool ask_yesno(const char *msg) {
+bool
+ask_yesno(const char *msg)
+{
 	char answer[MAXSTRING];
 
-	while(TRUE) {
+	while (TRUE) {
 		printf("%s [yes/no] ", msg);
-		if(read_string(answer, MAXSTRING) < 0) return (FALSE);
-		if(Strcmp(answer, "yes"))
-			return (TRUE);
-		else if(Strcmp(answer, "no"))
-			return (FALSE);
+		if (read_string(answer, MAXSTRING) < 0)
+			return(FALSE);
+		if (Strcmp(answer, "yes"))
+			return(TRUE);
+		else if (Strcmp(answer, "no"))
+			return(FALSE);
 		else
 			printf("Please answer either yes or no\n");
 	}
@@ -200,32 +209,38 @@ bool ask_yesno(const char *msg) {
  * Error
  *	None
  */
-bool do_move(int player) {
+bool
+do_move(int player)
+{
 	int x, y;
 	char answer[MAXSTRING];
 	char cx;
 
-	printf("Player %d (%c), your move\n", player, player == X_PLAYER ? 'X' : 'O');
+	printf("Player %d (%c), your move\n", player,
+	       player == X_PLAYER ? 'X' : 'O');
 
-	while(TRUE) {
-		printf("Which row [0-%d]: ", DIM - 1);
-		if(read_string(answer, MAXSTRING) < 0) return (FALSE);
+	while (TRUE) {
+		printf("Which row [0-%d]: ", DIM-1);
+		if (read_string(answer, MAXSTRING) < 0)
+			return(FALSE);
 		cx = answer[0];
 		x = cx - '0';
-		if(x < 0 || x >= DIM) {
-			printf("Invalid row; must be >= 0 and < %d\n", DIM - 1);
+		if (x < 0 || x >= DIM) {
+			printf("Invalid row; must be >= 0 and < %d\n", DIM-1);
 			continue;
 		}
-		printf("Which column [0-%d]: ", DIM - 1);
-		if(read_string(answer, MAXSTRING) < 0) return (FALSE);
+		printf("Which column [0-%d]: ", DIM-1);
+		if (read_string(answer, MAXSTRING) < 0)
+			return(FALSE);
 		cx = answer[0];
 		y = cx - '0';
-		if(y < 0 || y >= DIM) {
-			printf("Invalid column; must be >= 0 and < %d\n", DIM - 1);
+		if (y < 0 || y >= DIM) {
+			printf("Invalid column; must be >= 0 and < %d\n",
+				DIM-1);
 			continue;
 		}
 
-		if(board[x][y] != EMPTY) {
+		if (board[x][y] != EMPTY) {
 			printf("That location is occupied; please try again\n");
 			print_board();
 		} else
@@ -233,7 +248,8 @@ bool do_move(int player) {
 	}
 	board[x][y] = player == X_PLAYER ? X_MARKER : O_MARKER;
 
-	return (is_win(x, y));
+	return(is_win(x, y));
+
 }
 
 /*
@@ -258,7 +274,9 @@ bool do_move(int player) {
  *	TRUE if player won
  *	FALSE otherwise
  */
-bool is_win(int x, int y) {
+bool
+is_win(int x, int y)
+{
 	int marker;
 
 	marker = board[x][y];
@@ -269,82 +287,111 @@ bool is_win(int x, int y) {
 	 * is true.  Therefore, we can return TRUE without executing
 	 * any of the other routines.
 	 */
-	return (win_row(x, marker) || win_column(y, marker) || win_diag_left(x, y, marker) || win_diag_right(x, y, marker));
+	return(win_row(x, marker) || win_column(y, marker) ||
+	    win_diag_left(x, y, marker) || win_diag_right(x, y, marker));
 }
 
 /*
  * Four helper functions for determining a win.
  */
-bool win_column(int y, int marker) {
+bool
+win_column(int y, int marker)
+{
 	int i;
-	for(i = 0; i < DIM; i++)
-		if(board[i][y] != marker) return (FALSE);
-	return (TRUE);
+	for (i = 0; i < DIM; i++)
+		if (board[i][y] != marker)
+			return(FALSE);
+	return(TRUE);
 }
 
-bool win_row(int x, int marker) {
+bool
+win_row(int x, int marker)
+{
 	int i;
-	for(i = 0; i < DIM; i++)
-		if(board[x][i] != marker) return (FALSE);
-	return (TRUE);
+	for (i = 0; i < DIM; i++)
+		if (board[x][i] != marker)
+			return(FALSE);
+	return(TRUE);
 }
 
-bool win_diag_left(int x, int y, int marker) {
-	int i;
-
-	/* Check that move is on the diagonal */
-	if(x != y) return (FALSE);
-
-	for(i = 0; i < DIM; i++)
-		if(board[i][i] != marker) return (FALSE);
-	return (TRUE);
-}
-
-bool win_diag_right(int x, int y, int marker) {
+bool
+win_diag_left(int x, int y, int marker)
+{
 	int i;
 
 	/* Check that move is on the diagonal */
-	if(x + y != DIM - 1) return (FALSE);
-	for(i = 0; i < DIM; i++)
-		if(board[i][DIM - 1 - i] != marker) return (FALSE);
-	return (TRUE);
+	if (x != y)
+		return(FALSE);
+
+	for (i = 0; i < DIM; i++)
+		if (board[i][i] != marker)
+			return(FALSE);
+	return(TRUE);
 }
 
-void initialize_board(void) {
+bool
+win_diag_right(int x, int y, int marker)
+{
+	int i;
+
+	/* Check that move is on the diagonal */
+	if (x + y != DIM - 1)
+		return(FALSE);
+	for (i = 0; i < DIM; i++)
+		if (board[i][DIM - 1 - i] != marker)
+			return(FALSE);
+	return(TRUE);
+}
+
+void
+initialize_board(void)
+{
 	int i, j;
 
-	for(i = 0; i < DIM; i++)
-		for(j = 0; j < DIM; j++) board[i][j] = EMPTY;
+	for (i = 0; i < DIM; i++)
+		for (j = 0; j < DIM; j++)
+			board[i][j] = EMPTY;
 }
 
-int read_string(char *buf, int length) {
-	int char_read;
-	int i;
+int
+read_string(char *buf, int length)
+{
+	int	char_read;
+	int	i;
 
 	i = 0;
-	while((char_read = getchar()) != EOF && char_read != NEWLINE && i < length) {
+	while ((char_read = getchar()) != EOF && char_read != NEWLINE &&
+	    i < length) {
 		buf[i] = (char) char_read;
 		i++;
 		putchar(char_read);
 	}
 
-	if(char_read == EOF) return (-1);
+	if (char_read == EOF)
+		return(-1);
 
 	/*
 	 * If the input overflows the buffer, just cut it short
 	 * at length - 1 characters.
 	 */
-	if(i >= length) i--;
+	if (i >= length)
+		i--;
 	buf[i] = 0;
-	return (i);
+	return(i);
 }
 
-bool Strcmp(const char *a, const char *b) {
-	if(a == NULL) return (b == NULL);
-	if(b == NULL) return (FALSE);
+bool
+Strcmp(const char *a, const char *b)
+{
+	if (a == NULL)
+		return(b == NULL);
+	if (b == NULL)
+		return(FALSE);
 
-	while(*a && *b)
-		if(*a++ != *b++) return (FALSE);
+	while (*a && *b)
+		if (*a++ != *b++)
+			return(FALSE);
 
-	return (*a == *b);
+	return(*a == *b);
+
 }

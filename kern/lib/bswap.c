@@ -27,8 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#include <endian.h>
 #include <types.h>
+#include <endian.h>
 
 /*
  * Unconditional byte-swap functions.
@@ -43,18 +43,33 @@
  * loop-based.
  */
 
-uint16_t bswap16(uint16_t val) {
-	return ((val & 0x00ff) << 8) | ((val & 0xff00) >> 8);
+uint16_t
+bswap16(uint16_t val)
+{
+	return    ((val & 0x00ff) << 8)
+		| ((val & 0xff00) >> 8);
 }
 
-uint32_t bswap32(uint32_t val) {
-	return ((val & 0x000000ff) << 24) | ((val & 0x0000ff00) << 8) | ((val & 0x00ff0000) >> 8) | ((val & 0xff000000) >> 24);
+uint32_t
+bswap32(uint32_t val)
+{
+	return    ((val & 0x000000ff) << 24)
+		| ((val & 0x0000ff00) << 8)
+		| ((val & 0x00ff0000) >> 8)
+		| ((val & 0xff000000) >> 24);
 }
 
-uint64_t bswap64(uint64_t val) {
-	return ((val & 0x00000000000000ff) << 56) | ((val & 0x000000000000ff00) << 40) | ((val & 0x0000000000ff0000) << 24) |
-		   ((val & 0x00000000ff000000) << 8) | ((val & 0x000000ff00000000) << 8) | ((val & 0x0000ff0000000000) << 24) |
-		   ((val & 0x00ff000000000000) >> 40) | ((val & 0xff00000000000000) >> 56);
+uint64_t
+bswap64(uint64_t val)
+{
+	return    ((val & 0x00000000000000ff) << 56)
+		| ((val & 0x000000000000ff00) << 40)
+		| ((val & 0x0000000000ff0000) << 24)
+		| ((val & 0x00000000ff000000) << 8)
+		| ((val & 0x000000ff00000000) << 8)
+		| ((val & 0x0000ff0000000000) << 24)
+		| ((val & 0x00ff000000000000) >> 40)
+		| ((val & 0xff00000000000000) >> 56);
 }
 
 /*
@@ -77,13 +92,9 @@ uint64_t bswap64(uint64_t val) {
  */
 
 #if _BYTE_ORDER == _LITTLE_ENDIAN
-#define TO(tag, bits, type)      \
-	type ntoh##tag(type val) {   \
-		return bswap##bits(val); \
-	}                            \
-	type hton##tag(type val) {   \
-		return bswap##bits(val); \
-	}
+#define TO(tag, bits, type) \
+    type ntoh##tag(type val) { return bswap##bits(val);	} \
+    type hton##tag(type val) { return bswap##bits(val);	}
 #endif
 
 /*
@@ -92,13 +103,9 @@ uint64_t bswap64(uint64_t val) {
  * the wrong option.
  */
 #if _BYTE_ORDER == _BIG_ENDIAN
-#define TO(tag, bits, type)    \
-	type ntoh##tag(type val) { \
-		return val;            \
-	}                          \
-	type hton##tag(type val) { \
-		return val;            \
-	}
+#define TO(tag, bits, type) \
+    type ntoh##tag(type val) { return val; } \
+    type hton##tag(type val) { return val; }
 #endif
 
 #if _BYTE_ORDER == _PDP_ENDIAN
@@ -109,8 +116,8 @@ uint64_t bswap64(uint64_t val) {
 #error "_BYTE_ORDER not set"
 #endif
 
-TO(s, 16, uint16_t)
-TO(l, 32, uint32_t)
+TO(s,  16, uint16_t)
+TO(l,  32, uint32_t)
 TO(ll, 64, uint64_t)
 
 
@@ -127,17 +134,21 @@ TO(ll, 64, uint64_t)
  * word.
  */
 
-void join32to64(uint32_t x1, uint32_t x2, uint64_t *y2) {
+void
+join32to64(uint32_t x1, uint32_t x2, uint64_t *y2)
+{
 #if _BYTE_ORDER == _BIG_ENDIAN
-	*y2 = ((uint64_t) x1 << 32) | (uint64_t) x2;
+	*y2 = ((uint64_t)x1 << 32) | (uint64_t)x2;
 #elif _BYTE_ORDER == _LITTLE_ENDIAN
-	*y2 = (uint64_t) x1 | ((uint64_t) x2 << 32);
+	*y2 = (uint64_t)x1 | ((uint64_t)x2 << 32);
 #else
 #error "Eh?"
 #endif
 }
 
-void split64to32(uint64_t x, uint32_t *y1, uint32_t *y2) {
+void
+split64to32(uint64_t x, uint32_t *y1, uint32_t *y2)
+{
 #if _BYTE_ORDER == _BIG_ENDIAN
 	*y1 = x >> 32;
 	*y2 = x & 0xffffffff;

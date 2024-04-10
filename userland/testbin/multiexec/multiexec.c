@@ -56,11 +56,11 @@
  *    multiexec /bin/sh (this makes a huge mess unless you have job control)
  */
 
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 ////////////////////////////////////////////////////////////
 // semaphores
@@ -85,43 +85,70 @@ struct usem {
 	int fd;
 };
 
-static void semcreate(const char *tag, struct usem *sem) {
+static
+void
+semcreate(const char *tag, struct usem *sem)
+{
 	int fd;
 
-	snprintf(sem->name, sizeof(sem->name), "sem:multiexec.%s.%d", tag, (int) getpid());
+	snprintf(sem->name, sizeof(sem->name), "sem:multiexec.%s.%d",
+		 tag, (int)getpid());
 
-	fd = open(sem->name, O_WRONLY | O_CREAT | O_TRUNC, 0664);
-	if(fd < 0) { err(1, "%s: create", sem->name); }
+	fd = open(sem->name, O_WRONLY|O_CREAT|O_TRUNC, 0664);
+	if (fd < 0) {
+		err(1, "%s: create", sem->name);
+	}
 	close(fd);
 }
 
-static void semopen(struct usem *sem) {
+static
+void
+semopen(struct usem *sem)
+{
 	sem->fd = open(sem->name, O_RDWR, 0664);
-	if(sem->fd < 0) { err(1, "%s: open", sem->name); }
+	if (sem->fd < 0) {
+		err(1, "%s: open", sem->name);
+	}
 }
 
-static void semclose(struct usem *sem) {
+static
+void
+semclose(struct usem *sem)
+{
 	close(sem->fd);
 }
 
-static void semdestroy(struct usem *sem) {
+static
+void
+semdestroy(struct usem *sem)
+{
 	remove(sem->name);
 }
 
-static void semP(struct usem *sem, size_t num) {
+static
+void
+semP(struct usem *sem, size_t num)
+{
 	char c[num];
 
-	if(read(sem->fd, c, num) < 0) { err(1, "%s: read", sem->name); }
-	(void) c;
+	if (read(sem->fd, c, num) < 0) {
+		err(1, "%s: read", sem->name);
+	}
+	(void)c;
 }
 
-static void semV(struct usem *sem, size_t num) {
+static
+void
+semV(struct usem *sem, size_t num)
+{
 	char c[num];
 
 	/* semfs does not use these values, but be conservative */
 	memset(c, 0, num);
 
-	if(write(sem->fd, c, num) < 0) { err(1, "%s: write", sem->name); }
+	if (write(sem->fd, c, num) < 0) {
+		err(1, "%s: write", sem->name);
+	}
 }
 
 ////////////////////////////////////////////////////////////
@@ -131,7 +158,10 @@ static void semV(struct usem *sem, size_t num) {
 static char *subargv[SUBARGC_MAX];
 static int subargc = 0;
 
-static void spawn(int njobs) {
+static
+void
+spawn(int njobs)
+{
 	struct usem s1, s2;
 	pid_t pids[njobs];
 	int failed, status;
@@ -142,16 +172,16 @@ static void spawn(int njobs) {
 
 	printf("Forking %d child processes...\n", njobs);
 
-	for(i = 0; i < njobs; i++) {
+	for (i=0; i<njobs; i++) {
 		pids[i] = fork();
-		if(pids[i] == -1) {
+		if (pids[i] == -1) {
 			/* continue with the procs we have; cannot kill them */
 			warn("fork");
 			warnx("*** Only started %u processes ***", i);
 			njobs = i;
 			break;
 		}
-		if(pids[i] == 0) {
+		if (pids[i] == 0) {
 			/* child */
 			semopen(&s1);
 			semopen(&s2);
@@ -173,21 +203,26 @@ static void spawn(int njobs) {
 	semV(&s2, njobs);
 
 	failed = 0;
-	for(i = 0; i < njobs; i++) {
-		if(waitpid(pids[i], &status, 0) < 0) {
+	for (i=0; i<njobs; i++) {
+		if (waitpid(pids[i], &status, 0) < 0) {
 			warn("waitpid");
 			failed++;
-		} else if(WIFSIGNALED(status)) {
-			warnx("pid %d (child %d): Signal %d", (int) pids[i], i, WTERMSIG(status));
+		}
+		else if (WIFSIGNALED(status)) {
+			warnx("pid %d (child %d): Signal %d",
+			      (int)pids[i], i, WTERMSIG(status));
 			failed++;
-		} else if(WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-			warnx("pid %d (child %d): Exit %d", (int) pids[i], i, WEXITSTATUS(status));
+		}
+		else if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+			warnx("pid %d (child %d): Exit %d",
+			      (int)pids[i], i, WEXITSTATUS(status));
 			failed++;
 		}
 	}
-	if(failed > 0) {
+	if (failed > 0) {
 		warnx("%d children failed", failed);
-	} else {
+	}
+	else {
 		printf("Succeeded\n");
 	}
 
@@ -197,16 +232,20 @@ static void spawn(int njobs) {
 	semdestroy(&s2);
 }
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[])
+{
 	static char default_prog[] = "/bin/pwd";
 
 	int njobs = 12;
 	int i;
 
-	for(i = 1; i < argc; i++) {
-		if(!strcmp(argv[i], "-j")) {
+	for (i=1; i<argc; i++) {
+		if (!strcmp(argv[i], "-j")) {
 			i++;
-			if(argv[i] == NULL) { errx(1, "Option -j requires an argument"); }
+			if (argv[i] == NULL) {
+				errx(1, "Option -j requires an argument");
+			}
 			njobs = atoi(argv[i]);
 		}
 #if 0 /* XXX we apparently don't have strncmp? */
@@ -216,11 +255,15 @@ int main(int argc, char *argv[]) {
 #endif
 		else {
 			subargv[subargc++] = argv[i];
-			if(subargc >= SUBARGC_MAX) { errx(1, "Too many arguments"); }
+			if (subargc >= SUBARGC_MAX) {
+				errx(1, "Too many arguments");
+			}
 		}
 	}
 
-	if(subargc == 0) { subargv[subargc++] = default_prog; }
+	if (subargc == 0) {
+		subargv[subargc++] = default_prog;
+	}
 	subargv[subargc] = NULL;
 
 	spawn(njobs);

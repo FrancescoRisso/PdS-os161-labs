@@ -35,12 +35,14 @@
  * and return it or the symbolic constant EOF (-1).
  */
 
-int getchar(void) {
+int
+getchar(void)
+{
 	char ch;
 	int len;
 
 	len = read(STDIN_FILENO, &ch, 1);
-	if(len <= 0) {
+	if (len<=0) {
 		/* end of file or error */
 		return EOF;
 	}
@@ -50,5 +52,5 @@ int getchar(void) {
 	 * sends back values on the range 0-255, rather than -128 to 127,
 	 * so EOF can be distinguished from legal input.
 	 */
-	return (int) (unsigned char) ch;
+	return (int)(unsigned char)ch;
 }

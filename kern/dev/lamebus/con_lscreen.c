@@ -32,16 +32,19 @@
  * screen device.
  */
 
+#include <types.h>
+#include <lib.h>
 #include <generic/console.h>
 #include <lamebus/lscreen.h>
-#include <lib.h>
-#include <types.h>
-
 #include "autoconf.h"
 
-struct con_softc *attach_con_to_lscreen(int consno, struct lscreen_softc *ls) {
+struct con_softc *
+attach_con_to_lscreen(int consno, struct lscreen_softc *ls)
+{
 	struct con_softc *cs = kmalloc(sizeof(struct con_softc));
-	if(cs == NULL) { return NULL; }
+	if (cs==NULL) {
+		return NULL;
+	}
 
 	cs->cs_devdata = ls;
 	cs->cs_send = lscreen_write;
@@ -53,3 +56,4 @@ struct con_softc *attach_con_to_lscreen(int consno, struct lscreen_softc *ls) {
 
 	return cs;
 }
+

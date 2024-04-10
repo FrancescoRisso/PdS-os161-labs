@@ -40,7 +40,9 @@
 /*
  * Return -a (or, equivalently, 0 - a), in long long.  See subdi3.c.
  */
-long long __negdi2(long long a) {
+long long
+__negdi2(long long a)
+{
 	union uu aa, res;
 
 	aa.ll = a;

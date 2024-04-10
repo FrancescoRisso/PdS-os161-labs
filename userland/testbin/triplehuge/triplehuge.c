@@ -37,7 +37,9 @@
 
 #include <test/triple.h>
 
-int main(void) {
+int
+main(void)
+{
 	triple("/testbin/huge");
 	return 0;
 }

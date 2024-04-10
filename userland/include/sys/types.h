@@ -42,8 +42,8 @@
 #include <kern/types.h>
 
 /* Pick up stuff that needs to be defined individually due to standards. */
-#include <sys/null.h>
 #include <types/size_t.h>
+#include <sys/null.h>
 
 /*
  * Define the rest with user-visible names.

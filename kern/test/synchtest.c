@@ -31,17 +31,17 @@
  * Synchronization test code.
  */
 
-#include <clock.h>
+#include <types.h>
 #include <lib.h>
+#include <clock.h>
+#include <thread.h>
 #include <synch.h>
 #include <test.h>
-#include <thread.h>
-#include <types.h>
 
-#define NSEMLOOPS 63
-#define NLOCKLOOPS 120
-#define NCVLOOPS 5
-#define NTHREADS 32
+#define NSEMLOOPS     63
+#define NLOCKLOOPS    120
+#define NCVLOOPS      5
+#define NTHREADS      32
 
 static volatile unsigned long testval1;
 static volatile unsigned long testval2;
@@ -51,44 +51,62 @@ static struct lock *testlock;
 static struct cv *testcv;
 static struct semaphore *donesem;
 
-static void inititems(void) {
-	if(testsem == NULL) {
+static
+void
+inititems(void)
+{
+	if (testsem==NULL) {
 		testsem = sem_create("testsem", 2);
-		if(testsem == NULL) { panic("synchtest: sem_create failed\n"); }
+		if (testsem == NULL) {
+			panic("synchtest: sem_create failed\n");
+		}
 	}
-	if(testlock == NULL) {
+	if (testlock==NULL) {
 		testlock = lock_create("testlock");
-		if(testlock == NULL) { panic("synchtest: lock_create failed\n"); }
+		if (testlock == NULL) {
+			panic("synchtest: lock_create failed\n");
+		}
 	}
-	if(testcv == NULL) {
+	if (testcv==NULL) {
 		testcv = cv_create("testlock");
-		if(testcv == NULL) { panic("synchtest: cv_create failed\n"); }
+		if (testcv == NULL) {
+			panic("synchtest: cv_create failed\n");
+		}
 	}
-	if(donesem == NULL) {
+	if (donesem==NULL) {
 		donesem = sem_create("donesem", 0);
-		if(donesem == NULL) { panic("synchtest: sem_create failed\n"); }
+		if (donesem == NULL) {
+			panic("synchtest: sem_create failed\n");
+		}
 	}
 }
 
-static void semtestthread(void *junk, unsigned long num) {
+static
+void
+semtestthread(void *junk, unsigned long num)
+{
 	int i;
-	(void) junk;
+	(void)junk;
 
 	/*
 	 * Only one of these should print at a time.
 	 */
 	P(testsem);
 	kprintf("Thread %2lu: ", num);
-	for(i = 0; i < NSEMLOOPS; i++) { kprintf("%c", (int) num + 64); }
+	for (i=0; i<NSEMLOOPS; i++) {
+		kprintf("%c", (int)num+64);
+	}
 	kprintf("\n");
 	V(donesem);
 }
 
-int semtest(int nargs, char **args) {
+int
+semtest(int nargs, char **args)
+{
 	int i, result;
 
-	(void) nargs;
-	(void) args;
+	(void)nargs;
+	(void)args;
 
 	inititems();
 	kprintf("Starting semaphore test...\n");
@@ -97,12 +115,15 @@ int semtest(int nargs, char **args) {
 	P(testsem);
 	kprintf("ok\n");
 
-	for(i = 0; i < NTHREADS; i++) {
+	for (i=0; i<NTHREADS; i++) {
 		result = thread_fork("semtest", NULL, semtestthread, NULL, i);
-		if(result) { panic("semtest: thread_fork failed: %s\n", strerror(result)); }
+		if (result) {
+			panic("semtest: thread_fork failed: %s\n",
+			      strerror(result));
+		}
 	}
 
-	for(i = 0; i < NTHREADS; i++) {
+	for (i=0; i<NTHREADS; i++) {
 		V(testsem);
 		P(donesem);
 	}
@@ -115,7 +136,10 @@ int semtest(int nargs, char **args) {
 	return 0;
 }
 
-static void fail(unsigned long num, const char *msg) {
+static
+void
+fail(unsigned long num, const char *msg)
+{
 	kprintf("thread %lu: Mismatch on %s\n", num, msg);
 	kprintf("Test failed\n");
 
@@ -125,27 +149,42 @@ static void fail(unsigned long num, const char *msg) {
 	thread_exit();
 }
 
-static void locktestthread(void *junk, unsigned long num) {
+static
+void
+locktestthread(void *junk, unsigned long num)
+{
 	int i;
-	(void) junk;
+	(void)junk;
 
-	for(i = 0; i < NLOCKLOOPS; i++) {
+	for (i=0; i<NLOCKLOOPS; i++) {
 		lock_acquire(testlock);
 		testval1 = num;
-		testval2 = num * num;
-		testval3 = num % 3;
+		testval2 = num*num;
+		testval3 = num%3;
 
-		if(testval2 != testval1 * testval1) { fail(num, "testval2/testval1"); }
+		if (testval2 != testval1*testval1) {
+			fail(num, "testval2/testval1");
+		}
 
-		if(testval2 % 3 != (testval3 * testval3) % 3) { fail(num, "testval2/testval3"); }
+		if (testval2%3 != (testval3*testval3)%3) {
+			fail(num, "testval2/testval3");
+		}
 
-		if(testval3 != testval1 % 3) { fail(num, "testval3/testval1"); }
+		if (testval3 != testval1%3) {
+			fail(num, "testval3/testval1");
+		}
 
-		if(testval1 != num) { fail(num, "testval1/num"); }
+		if (testval1 != num) {
+			fail(num, "testval1/num");
+		}
 
-		if(testval2 != num * num) { fail(num, "testval2/num"); }
+		if (testval2 != num*num) {
+			fail(num, "testval2/num");
+		}
 
-		if(testval3 != num % 3) { fail(num, "testval3/num"); }
+		if (testval3 != num%3) {
+			fail(num, "testval3/num");
+		}
 
 		lock_release(testlock);
 	}
@@ -153,36 +192,47 @@ static void locktestthread(void *junk, unsigned long num) {
 }
 
 
-int locktest(int nargs, char **args) {
+int
+locktest(int nargs, char **args)
+{
 	int i, result;
 
-	(void) nargs;
-	(void) args;
+	(void)nargs;
+	(void)args;
 
 	inititems();
 	kprintf("Starting lock test...\n");
 
-	for(i = 0; i < NTHREADS; i++) {
-		result = thread_fork("synchtest", NULL, locktestthread, NULL, i);
-		if(result) { panic("locktest: thread_fork failed: %s\n", strerror(result)); }
+	for (i=0; i<NTHREADS; i++) {
+		result = thread_fork("synchtest", NULL, locktestthread,
+				     NULL, i);
+		if (result) {
+			panic("locktest: thread_fork failed: %s\n",
+			      strerror(result));
+		}
 	}
-	for(i = 0; i < NTHREADS; i++) { P(donesem); }
+	for (i=0; i<NTHREADS; i++) {
+		P(donesem);
+	}
 
 	kprintf("Lock test done.\n");
 
 	return 0;
 }
 
-static void cvtestthread(void *junk, unsigned long num) {
+static
+void
+cvtestthread(void *junk, unsigned long num)
+{
 	int i;
 	volatile int j;
 	struct timespec ts1, ts2;
 
-	(void) junk;
+	(void)junk;
 
-	for(i = 0; i < NCVLOOPS; i++) {
+	for (i=0; i<NCVLOOPS; i++) {
 		lock_acquire(testlock);
-		while(testval1 != num) {
+		while (testval1 != num) {
 			gettime(&ts1);
 			cv_wait(testcv, testlock);
 			gettime(&ts2);
@@ -191,24 +241,24 @@ static void cvtestthread(void *junk, unsigned long num) {
 			timespec_sub(&ts2, &ts1, &ts2);
 
 			/* Require at least 2000 cpu cycles (we're 25mhz) */
-			if(ts2.tv_sec == 0 && ts2.tv_nsec < 40 * 2000) {
-				kprintf("cv_wait took only %u ns\n", ts2.tv_nsec);
-				kprintf(
-					"That's too fast... you must be "
+			if (ts2.tv_sec == 0 && ts2.tv_nsec < 40*2000) {
+				kprintf("cv_wait took only %u ns\n",
+					ts2.tv_nsec);
+				kprintf("That's too fast... you must be "
 					"busy-looping\n");
 				V(donesem);
 				thread_exit();
 			}
+
 		}
 		kprintf("Thread %lu\n", num);
-		testval1 = (testval1 + NTHREADS - 1) % NTHREADS;
+		testval1 = (testval1 + NTHREADS - 1)%NTHREADS;
 
 		/*
 		 * loop a little while to make sure we can measure the
 		 * time waiting on the cv.
 		 */
-		for(j = 0; j < 3000; j++)
-			;
+		for (j=0; j<3000; j++);
 
 		cv_broadcast(testcv, testlock);
 		lock_release(testlock);
@@ -216,23 +266,31 @@ static void cvtestthread(void *junk, unsigned long num) {
 	V(donesem);
 }
 
-int cvtest(int nargs, char **args) {
+int
+cvtest(int nargs, char **args)
+{
+
 	int i, result;
 
-	(void) nargs;
-	(void) args;
+	(void)nargs;
+	(void)args;
 
 	inititems();
 	kprintf("Starting CV test...\n");
 	kprintf("Threads should print out in reverse order.\n");
 
-	testval1 = NTHREADS - 1;
+	testval1 = NTHREADS-1;
 
-	for(i = 0; i < NTHREADS; i++) {
+	for (i=0; i<NTHREADS; i++) {
 		result = thread_fork("synchtest", NULL, cvtestthread, NULL, i);
-		if(result) { panic("cvtest: thread_fork failed: %s\n", strerror(result)); }
+		if (result) {
+			panic("cvtest: thread_fork failed: %s\n",
+			      strerror(result));
+		}
 	}
-	for(i = 0; i < NTHREADS; i++) { P(donesem); }
+	for (i=0; i<NTHREADS; i++) {
+		P(donesem);
+	}
 
 	kprintf("CV test done\n");
 
@@ -256,14 +314,17 @@ static struct lock *testlocks[NCVS];
 static struct semaphore *gatesem;
 static struct semaphore *exitsem;
 
-static void sleepthread(void *junk1, unsigned long junk2) {
+static
+void
+sleepthread(void *junk1, unsigned long junk2)
+{
 	unsigned i, j;
 
-	(void) junk1;
-	(void) junk2;
+	(void)junk1;
+	(void)junk2;
 
-	for(j = 0; j < NLOOPS; j++) {
-		for(i = 0; i < NCVS; i++) {
+	for (j=0; j<NLOOPS; j++) {
+		for (i=0; i<NCVS; i++) {
 			lock_acquire(testlocks[i]);
 			V(gatesem);
 			cv_wait(testcvs[i], testlocks[i]);
@@ -274,14 +335,17 @@ static void sleepthread(void *junk1, unsigned long junk2) {
 	V(exitsem);
 }
 
-static void wakethread(void *junk1, unsigned long junk2) {
+static
+void
+wakethread(void *junk1, unsigned long junk2)
+{
 	unsigned i, j;
 
-	(void) junk1;
-	(void) junk2;
+	(void)junk1;
+	(void)junk2;
 
-	for(j = 0; j < NLOOPS; j++) {
-		for(i = 0; i < NCVS; i++) {
+	for (j=0; j<NLOOPS; j++) {
+		for (i=0; i<NCVS; i++) {
 			P(gatesem);
 			lock_acquire(testlocks[i]);
 			cv_signal(testcvs[i], testlocks[i]);
@@ -292,14 +356,16 @@ static void wakethread(void *junk1, unsigned long junk2) {
 	V(exitsem);
 }
 
-int cvtest2(int nargs, char **args) {
+int
+cvtest2(int nargs, char **args)
+{
 	unsigned i;
 	int result;
 
-	(void) nargs;
-	(void) args;
+	(void)nargs;
+	(void)args;
 
-	for(i = 0; i < NCVS; i++) {
+	for (i=0; i<NCVS; i++) {
 		testlocks[i] = lock_create("cvtest2 lock");
 		testcvs[i] = cv_create("cvtest2 cv");
 	}
@@ -309,9 +375,13 @@ int cvtest2(int nargs, char **args) {
 	kprintf("cvtest2...\n");
 
 	result = thread_fork("cvtest2", NULL, sleepthread, NULL, 0);
-	if(result) { panic("cvtest2: thread_fork failed\n"); }
+	if (result) {
+		panic("cvtest2: thread_fork failed\n");
+	}
 	result = thread_fork("cvtest2", NULL, wakethread, NULL, 0);
-	if(result) { panic("cvtest2: thread_fork failed\n"); }
+	if (result) {
+		panic("cvtest2: thread_fork failed\n");
+	}
 
 	P(exitsem);
 	P(exitsem);
@@ -319,7 +389,7 @@ int cvtest2(int nargs, char **args) {
 	sem_destroy(exitsem);
 	sem_destroy(gatesem);
 	exitsem = gatesem = NULL;
-	for(i = 0; i < NCVS; i++) {
+	for (i=0; i<NCVS; i++) {
 		lock_destroy(testlocks[i]);
 		cv_destroy(testcvs[i]);
 		testlocks[i] = NULL;

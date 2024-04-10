@@ -44,8 +44,8 @@
  * DEFAULT is the default stride.
  * Note that SIZE and DEFAULT should be relatively prime.
  */
-#define SIZE (1024 * 1024 / sizeof(struct entry))
-#define DEFAULT 477
+#define SIZE      (1024*1024/sizeof(struct entry))
+#define DEFAULT   477
 
 struct entry {
 	struct entry *e;
@@ -53,13 +53,17 @@ struct entry {
 
 struct entry array[SIZE];
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+{
 	volatile struct entry *e;
 	unsigned i, stride;
 
 	stride = DEFAULT;
-	if(argc == 2) { stride = atoi(argv[1]); }
-	if(stride <= 0 || argc > 2) {
+	if (argc == 2) {
+		stride = atoi(argv[1]);
+	}
+	if (stride <= 0 || argc > 2) {
 		printf("Usage: ctest [stridesize]\n");
 		printf("   stridesize should not be a multiple of 2.\n");
 		return 1;
@@ -74,7 +78,9 @@ int main(int argc, char **argv) {
 	 * list. Otherwise you will get multiple disjoint lists. (All
 	 * these lists will be circular.)
 	 */
-	for(i = 0; i < SIZE; i++) { array[i].e = &array[(i + stride) % SIZE]; }
+	for (i=0; i<SIZE; i++) {
+		array[i].e = &array[(i+stride) % SIZE];
+	}
 
 	/*
 	 * Traverse the list. We stop after hitting each element once.
@@ -83,8 +89,10 @@ int main(int argc, char **argv) {
 	 * once and others not at all.)
 	 */
 	e = &array[0];
-	for(i = 0; i < SIZE; i++) {
-		if(i % stride == 0) { putchar('.'); }
+	for (i=0; i<SIZE; i++) {
+		if (i % stride == 0) {
+			putchar('.');
+		}
 		e = e->e;
 	}
 

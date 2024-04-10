@@ -1,24 +1,23 @@
 #include "hello.h"
 
-#include <clock.h>
-#include <current.h>
-#include <device.h>
+#include <types.h>
 #include <kern/errno.h>
 #include <kern/reboot.h>
 #include <kern/unistd.h>
 #include <lib.h>
-#include <mainbus.h>
-#include <proc.h>
 #include <spl.h>
+#include <clock.h>
+#include <thread.h>
+#include <proc.h>
+#include <current.h>
 #include <synch.h>
+#include <vm.h>
+#include <mainbus.h>
+#include <vfs.h>
+#include <device.h>
 #include <syscall.h>
 #include <test.h>
-#include <thread.h>
-#include <types.h>
 #include <version.h>
-#include <vfs.h>
-#include <vm.h>
-
 #include "autoconf.h"  // for pseudoconfig
 
 #if OPT_HELLO

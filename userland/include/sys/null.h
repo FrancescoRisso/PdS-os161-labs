@@ -34,6 +34,6 @@
  * Null pointer.
  */
 
-#define NULL ((void *) 0)
+#define NULL ((void *)0)
 
 #endif /* _SYS_NULL_H_ */

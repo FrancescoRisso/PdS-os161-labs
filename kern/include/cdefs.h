@@ -39,7 +39,7 @@
  * Build-time assertion. Doesn't generate any code. The error message
  * on failure is less than ideal, but you can't have everything.
  */
-#define COMPILE_ASSERT(x) ((void) sizeof(struct { unsigned : ((x) ? 1 : -1); }))
+#define COMPILE_ASSERT(x) ((void)sizeof(struct { unsigned : ((x)?1:-1); }))
 
 
 /*
@@ -54,11 +54,11 @@
  * about uninitialized variables.
  */
 #ifdef __GNUC__
-#define __PF(a, b) __attribute__((__format__(__printf__, a, b)))
-#define __DEAD __attribute__((__noreturn__))
-#define __UNUSED __attribute__((__unused__))
+#define __PF(a,b) __attribute__((__format__(__printf__, a, b)))
+#define __DEAD    __attribute__((__noreturn__))
+#define __UNUSED  __attribute__((__unused__))
 #else
-#define __PF(a, b)
+#define __PF(a,b)
 #define __DEAD
 #define __UNUSED
 #endif

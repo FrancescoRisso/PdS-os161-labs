@@ -35,7 +35,9 @@
  * Just calls the sync() system call.
  */
 
-int main(void) {
+int
+main(void)
+{
 	sync();
 	return 0;
 }

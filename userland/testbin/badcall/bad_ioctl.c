@@ -31,16 +31,20 @@
  * ioctl
  */
 
-#include <errno.h>
-#include <stdio.h>
-#include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
 
 #include "config.h"
 #include "test.h"
 
-static void one_ioctl_badbuf(int fd, int code, const char *codename, void *ptr, const char *ptrdesc) {
+static
+void
+one_ioctl_badbuf(int fd, int code, const char *codename,
+		 void *ptr, const char *ptrdesc)
+{
 	int rv;
 
 	report_begin("ioctl %s with %s", codename, ptrdesc);
@@ -48,7 +52,10 @@ static void one_ioctl_badbuf(int fd, int code, const char *codename, void *ptr, 
 	report_check(rv, errno, EFAULT);
 }
 
-static void any_ioctl_badbuf(int fd, int code, const char *codename) {
+static
+void
+any_ioctl_badbuf(int fd, int code, const char *codename)
+{
 	one_ioctl_badbuf(fd, code, codename, NULL, "NULL pointer");
 	one_ioctl_badbuf(fd, code, codename, INVAL_PTR, "invalid pointer");
 	one_ioctl_badbuf(fd, code, codename, KERN_PTR, "kernel pointer");
@@ -56,7 +63,10 @@ static void any_ioctl_badbuf(int fd, int code, const char *codename) {
 
 #define IOCTL(fd, sym) any_ioctl_badbuf(fd, sym, #sym)
 
-static void ioctl_badbuf(void) {
+static
+void
+ioctl_badbuf(void)
+{
 	/*
 	 * Since we don't actually define any ioctls, this code won't
 	 * actually run. But if you do define ioctls, turn these tests
@@ -68,10 +78,13 @@ static void ioctl_badbuf(void) {
 
 
 	/* suppress gcc warning */
-	(void) any_ioctl_badbuf;
+	(void)any_ioctl_badbuf;
 }
 
-static void ioctl_badcode(void) {
+static
+void
+ioctl_badcode(void)
+{
 	int rv;
 
 	report_begin("invalid ioctl");
@@ -79,7 +92,9 @@ static void ioctl_badcode(void) {
 	report_check(rv, errno, EIOCTL);
 }
 
-void test_ioctl(void) {
+void
+test_ioctl(void)
+{
 	test_ioctl_fd();
 
 	/* Since we don't actually define any ioctls, this is not meaningful */

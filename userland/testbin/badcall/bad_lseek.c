@@ -31,25 +31,28 @@
  * lseek
  */
 
-#include <err.h>
-#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
+#include <err.h>
 
 #include "config.h"
 #include "test.h"
 
-static void lseek_fd_device(void) {
+static
+void
+lseek_fd_device(void)
+{
 	int fd, rv;
 
 	report_begin("lseek on device");
 
 	fd = open("null:", O_RDONLY);
-	if(fd < 0) {
+	if (fd<0) {
 		report_warn("opening null: failed");
 		report_aborted();
 		return;
@@ -61,7 +64,10 @@ static void lseek_fd_device(void) {
 	close(fd);
 }
 
-static void lseek_file_stdin(void) {
+static
+void
+lseek_file_stdin(void)
+{
 	int fd, fd2, rv, status;
 	const char slogan[] = "There ain't no such thing as a free lunch";
 	size_t len = strlen(slogan);
@@ -71,22 +77,26 @@ static void lseek_file_stdin(void) {
 
 	/* fork so we don't affect our own stdin */
 	pid = fork();
-	if(pid < 0) {
+	if (pid<0) {
 		report_warn("fork failed");
 		report_aborted();
 		return;
-	} else if(pid != 0) {
+	}
+	else if (pid!=0) {
 		/* parent */
 		rv = waitpid(pid, &status, 0);
-		if(rv < 0) {
+		if (rv<0) {
 			report_warn("waitpid failed");
 			report_aborted();
 		}
-		if(WIFSIGNALED(status)) {
-			report_warnx("subprocess exited with signal %d", WTERMSIG(status));
+		if (WIFSIGNALED(status)) {
+			report_warnx("subprocess exited with signal %d",
+				     WTERMSIG(status));
 			report_aborted();
-		} else if(WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-			report_warnx("subprocess exited with code %d", WEXITSTATUS(status));
+		}
+		else if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+			report_warnx("subprocess exited with code %d",
+				     WEXITSTATUS(status));
 			report_aborted();
 		}
 		return;
@@ -95,7 +105,9 @@ static void lseek_file_stdin(void) {
 	/* child */
 
 	fd = open_testfile(NULL);
-	if(fd < 0) { _exit(0); }
+	if (fd<0) {
+		_exit(0);
+	}
 
 	/*
 	 * Move file to stdin.
@@ -105,13 +117,13 @@ static void lseek_file_stdin(void) {
 	 * and it will be.)
 	 */
 	fd2 = dup2(fd, STDIN_FILENO);
-	if(fd2 < 0) {
+	if (fd2<0) {
 		report_warn("dup2 to stdin failed");
 		close(fd);
 		remove(TESTFILE);
 		_exit(1);
 	}
-	if(fd2 != STDIN_FILENO) {
+	if (fd2 != STDIN_FILENO) {
 		report_warn("dup2 returned wrong file handle");
 		close(fd);
 		remove(TESTFILE);
@@ -120,14 +132,15 @@ static void lseek_file_stdin(void) {
 	close(fd);
 
 	rv = write(STDIN_FILENO, slogan, len);
-	if(rv < 0) {
+	if (rv<0) {
 		report_warn("write to %s (via stdin) failed", TESTFILE);
 		remove(TESTFILE);
 		_exit(1);
 	}
 
-	if((unsigned) rv != len) {
-		report_warnx("write to %s (via stdin) got short count", TESTFILE);
+	if ((unsigned)rv != len) {
+		report_warnx("write to %s (via stdin) got short count",
+			     TESTFILE);
 		remove(TESTFILE);
 		_exit(1);
 	}
@@ -147,13 +160,16 @@ static void lseek_file_stdin(void) {
 	_exit(0);
 }
 
-static void lseek_loc_negative(void) {
+static
+void
+lseek_loc_negative(void)
+{
 	int fd, rv;
 
 	report_begin("lseek to negative offset");
 
 	fd = open_testfile(NULL);
-	if(fd < 0) {
+	if (fd<0) {
 		report_aborted();
 		return;
 	}
@@ -165,13 +181,16 @@ static void lseek_loc_negative(void) {
 	remove(TESTFILE);
 }
 
-static void lseek_whence_inval(void) {
+static
+void
+lseek_whence_inval(void)
+{
 	int fd, rv;
 
 	report_begin("lseek with invalid whence code");
 
 	fd = open_testfile(NULL);
-	if(fd < 0) {
+	if (fd<0) {
 		report_aborted();
 		return;
 	}
@@ -183,7 +202,10 @@ static void lseek_whence_inval(void) {
 	remove(TESTFILE);
 }
 
-static void lseek_loc_pasteof(void) {
+static
+void
+lseek_loc_pasteof(void)
+{
 	const char *message = "blahblah";
 	int fd;
 	off_t pos;
@@ -191,57 +213,61 @@ static void lseek_loc_pasteof(void) {
 	report_begin("seek past/to EOF");
 
 	fd = open_testfile(message);
-	if(fd < 0) {
+	if (fd<0) {
 		report_aborted();
 		return;
 	}
 
 	pos = lseek(fd, 5340, SEEK_SET);
-	if(pos == -1) {
+	if (pos == -1) {
 		report_warn("lseek past EOF failed");
 		report_failure();
 		goto out;
 	}
-	if(pos != 5340) {
+	if (pos != 5340) {
 		report_warnx("lseek to 5340 got offset %lld", (long long) pos);
 		report_failure();
 		goto out;
 	}
 
 	pos = lseek(fd, -50, SEEK_CUR);
-	if(pos == -1) {
+	if (pos == -1) {
 		report_warn("small seek beyond EOF failed");
 		report_failure();
 		goto out;
 	}
-	if(pos != 5290) {
-		report_warnx("SEEK_CUR to 5290 got offset %lld", (long long) pos);
+	if (pos != 5290) {
+		report_warnx("SEEK_CUR to 5290 got offset %lld",
+			     (long long) pos);
 		report_failure();
 		goto out;
 	}
 
 	pos = lseek(fd, 0, SEEK_END);
-	if(pos == -1) {
+	if (pos == -1) {
 		report_warn("seek to EOF failed");
 		report_failure();
 		goto out;
 	}
 
-	if(pos != (off_t) strlen(message)) {
-		report_warnx("seek to EOF got %lld (should be %zu)", (long long) pos, strlen(message));
+	if (pos != (off_t) strlen(message)) {
+		report_warnx("seek to EOF got %lld (should be %zu)",
+			     (long long) pos, strlen(message));
 		report_failure();
 		goto out;
 	}
 
 	report_passed();
 
-out:
+    out:
 	close(fd);
 	remove(TESTFILE);
 	return;
 }
 
-void test_lseek(void) {
+void
+test_lseek(void)
+{
 	test_lseek_fd();
 
 	lseek_fd_device();

@@ -32,12 +32,12 @@
  * Semaphore pong.
  */
 
-#include <assert.h>
-#include <err.h>
 #include <stdio.h>
+#include <err.h>
+#include <assert.h>
 
-#include "tasks.h"
 #include "usem.h"
+#include "tasks.h"
 
 #define MAXCOUNT 64
 #define PONGLOOPS 1000
@@ -55,21 +55,31 @@ static unsigned nsems;
  * that way each task process has its own file handles and they don't
  * interfere with each other if file handle locking isn't so great.
  */
-void pong_prep(unsigned groupid, unsigned count) {
+void
+pong_prep(unsigned groupid, unsigned count)
+{
 	unsigned i;
 
-	if(count > MAXCOUNT) { err(1, "pong: too many pongers -- recompile pong.c"); }
-	for(i = 0; i < count; i++) { usem_init(&sems[i], "sem:pong-%u-%u", groupid, i); }
+	if (count > MAXCOUNT) {
+		err(1, "pong: too many pongers -- recompile pong.c");
+	}
+	for (i=0; i<count; i++) {
+		usem_init(&sems[i], "sem:pong-%u-%u", groupid, i);
+	}
 	nsems = count;
 }
 
-void pong_cleanup(unsigned groupid, unsigned count) {
+void
+pong_cleanup(unsigned groupid, unsigned count)
+{
 	unsigned i;
 
 	assert(nsems == count);
-	(void) groupid;
-
-	for(i = 0; i < count; i++) { usem_cleanup(&sems[i]); }
+	(void)groupid;
+	
+	for (i=0; i<count; i++) {
+		usem_cleanup(&sems[i]);
+	}
 }
 
 /*
@@ -77,25 +87,36 @@ void pong_cleanup(unsigned groupid, unsigned count) {
  * If we're id 0, don't wait the first go so things start, but do
  * wait the last go.
  */
-static void pong_cyclic(unsigned id) {
+static
+void
+pong_cyclic(unsigned id)
+{
 	unsigned i;
 	unsigned nextid;
 
 	nextid = (id + 1) % nsems;
-	for(i = 0; i < PONGLOOPS; i++) {
-		if(i > 0 || id > 0) { P(&sems[id]); }
+	for (i=0; i<PONGLOOPS; i++) {
+		if (i > 0 || id > 0) {
+			P(&sems[id]);
+		}
 #ifdef VERBOSE_PONG
 		printf(" %u", id);
 #else
-		if(nextid == 0 && i % 16 == 0) { putchar('.'); }
+		if (nextid == 0 && i % 16 == 0) {
+			putchar('.');
+		}
 #endif
 		V(&sems[nextid]);
 	}
-	if(id == 0) { P(&sems[id]); }
+	if (id == 0) {
+		P(&sems[id]);
+	}
 #ifdef VERBOSE_PONG
 	putchar('\n');
 #else
-	if(nextid == 0) { putchar('\n'); }
+	if (nextid == 0) {
+		putchar('\n');
+	}
 #endif
 }
 
@@ -103,53 +124,69 @@ static void pong_cyclic(unsigned id) {
  * Pong back and forth. This runs the tasks with middle numbers more
  * often.
  */
-static void pong_reciprocating(unsigned id) {
+static
+void
+pong_reciprocating(unsigned id)
+{
 	unsigned i, n;
 	unsigned nextfwd, nextback;
 	unsigned gofwd = 1;
 
-	if(id == 0) {
+	if (id == 0) {
 		nextfwd = nextback = 1;
 		n = PONGLOOPS;
-	} else if(id == nsems - 1) {
+	}
+	else if (id == nsems - 1) {
 		nextfwd = nextback = nsems - 2;
 		n = PONGLOOPS;
-	} else {
+	}
+	else {
 		nextfwd = id + 1;
 		nextback = id - 1;
 		n = PONGLOOPS * 2;
 	}
 
-	for(i = 0; i < n; i++) {
-		if(i > 0 || id > 0) { P(&sems[id]); }
+	for (i=0; i<n; i++) {
+		if (i > 0 || id > 0) {
+			P(&sems[id]);
+		}
 #ifdef VERBOSE_PONG
 		printf(" %u", id);
 #else
-		if(id == 0 && i % 16 == 0) { putchar('.'); }
+		if (id == 0 && i % 16 == 0) {
+			putchar('.');
+		}
 #endif
-		if(gofwd) {
+		if (gofwd) {
 			V(&sems[nextfwd]);
 			gofwd = 0;
-		} else {
+		}
+		else {
 			V(&sems[nextback]);
 			gofwd = 1;
 		}
 	}
-	if(id == 0) { P(&sems[id]); }
+	if (id == 0) {
+		P(&sems[id]);
+	}
 #ifdef VERBOSE_PONG
 	putchar('\n');
 #else
-	if(id == 0) { putchar('\n'); }
+	if (id == 0) {
+		putchar('\n');
+	}
 #endif
 }
 
 /*
  * Do the pong thing.
  */
-void pong(unsigned groupid, unsigned id) {
+void
+pong(unsigned groupid, unsigned id)
+{
 	unsigned idfwd, idback;
 
-	(void) groupid;
+	(void)groupid;
 
 	idfwd = (id + 1) % nsems;
 	idback = (id + nsems - 1) % nsems;

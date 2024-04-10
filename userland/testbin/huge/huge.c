@@ -40,32 +40,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define PageSize 4096
-#define NumPages 512
+#define PageSize	4096
+#define NumPages	512
 
-int sparse[NumPages][PageSize]; /* use only the first element in the row */
+int sparse[NumPages][PageSize];	/* use only the first element in the row */
 
-int main(void) {
-	int i, j;
+int
+main(void)
+{
+	int i,j;
 
 	printf("Entering the huge program - I will stress test your VM\n");
 
 	/* move number in so that sparse[i][0]=i */
-	for(i = 0; i < NumPages; i++) { sparse[i][0] = i; }
+	for (i=0; i<NumPages; i++) {
+		sparse[i][0]=i;
+	}
 
 	printf("stage [1] done\n");
 
 	/* increment each location 5 times */
-	for(j = 0; j < 5; j++) {
-		for(i = 0; i < NumPages; i++) { sparse[i][0]++; }
+	for (j=0; j<5; j++) {
+		for (i=0; i<NumPages; i++) {
+			sparse[i][0]++;
+		}
 		printf("stage [2.%d] done\n", j);
 	}
 
 	printf("stage [2] done\n");
 
 	/* check if the numbers are sane */
-	for(i = NumPages - 1; i >= 0; i--) {
-		if(sparse[i][0] != i + 5) {
+	for (i=NumPages-1; i>=0; i--) {
+		if (sparse[i][0]!=i+5) {
 			printf("BAD NEWS!!! - your VM mechanism has a bug!\n");
 			exit(1);
 		}
@@ -75,3 +81,4 @@ int main(void) {
 
 	return 0;
 }
+

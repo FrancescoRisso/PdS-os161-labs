@@ -27,15 +27,15 @@
  * SUCH DAMAGE.
  */
 
-#include <current.h>
+#include <types.h>
 #include <kern/errno.h>
 #include <kern/fcntl.h>
-#include <proc.h>
 #include <stat.h>
+#include <uio.h>
 #include <synch.h>
 #include <thread.h>
-#include <types.h>
-#include <uio.h>
+#include <proc.h>
+#include <current.h>
 #include <vfs.h>
 #include <vnode.h>
 
@@ -44,43 +44,62 @@
 ////////////////////////////////////////////////////////////
 // basic ops
 
-static int semfs_eachopen(struct vnode *vn, int openflags) {
+static
+int
+semfs_eachopen(struct vnode *vn, int openflags)
+{
 	struct semfs_vnode *semv = vn->vn_data;
 
-	if(semv->semv_semnum == SEMFS_ROOTDIR) {
-		if((openflags & O_ACCMODE) != O_RDONLY) { return EISDIR; }
-		if(openflags & O_APPEND) { return EISDIR; }
+	if (semv->semv_semnum == SEMFS_ROOTDIR) {
+		if ((openflags & O_ACCMODE) != O_RDONLY) {
+			return EISDIR;
+		}
+		if (openflags & O_APPEND) {
+			return EISDIR;
+		}
 	}
 
 	return 0;
 }
 
-static int semfs_ioctl(struct vnode *vn, int op, userptr_t data) {
-	(void) vn;
-	(void) op;
-	(void) data;
+static
+int
+semfs_ioctl(struct vnode *vn, int op, userptr_t data)
+{
+	(void)vn;
+	(void)op;
+	(void)data;
 	return EINVAL;
 }
 
-static int semfs_gettype(struct vnode *vn, mode_t *ret) {
+static
+int
+semfs_gettype(struct vnode *vn, mode_t *ret)
+{
 	struct semfs_vnode *semv = vn->vn_data;
 
 	*ret = semv->semv_semnum == SEMFS_ROOTDIR ? S_IFDIR : S_IFREG;
 	return 0;
 }
 
-static bool semfs_isseekable(struct vnode *vn) {
+static
+bool
+semfs_isseekable(struct vnode *vn)
+{
 	struct semfs_vnode *semv = vn->vn_data;
 
-	if(semv->semv_semnum != SEMFS_ROOTDIR) {
+	if (semv->semv_semnum != SEMFS_ROOTDIR) {
 		/* seeking a semaphore doesn't mean anything */
 		return false;
 	}
 	return true;
 }
 
-static int semfs_fsync(struct vnode *vn) {
-	(void) vn;
+static
+int
+semfs_fsync(struct vnode *vn)
+{
+	(void)vn;
 	return 0;
 }
 
@@ -91,7 +110,10 @@ static int semfs_fsync(struct vnode *vn) {
  * XXX fold these two together
  */
 
-static struct semfs_sem *semfs_getsembynum(struct semfs *semfs, unsigned semnum) {
+static
+struct semfs_sem *
+semfs_getsembynum(struct semfs *semfs, unsigned semnum)
+{
 	struct semfs_sem *sem;
 
 	lock_acquire(semfs->semfs_tablelock);
@@ -101,7 +123,10 @@ static struct semfs_sem *semfs_getsembynum(struct semfs *semfs, unsigned semnum)
 	return sem;
 }
 
-static struct semfs_sem *semfs_getsem(struct semfs_vnode *semv) {
+static
+struct semfs_sem *
+semfs_getsem(struct semfs_vnode *semv)
+{
 	struct semfs *semfs = semv->semv_semfs;
 
 	return semfs_getsembynum(semfs, semv->semv_semnum);
@@ -113,11 +138,17 @@ static struct semfs_sem *semfs_getsem(struct semfs_vnode *semv) {
  * potentially need to wake more than one sleeper if the new count
  * will be more than 1.
  */
-static void semfs_wakeup(struct semfs_sem *sem, unsigned newcount) {
-	if(sem->sems_count > 0 || newcount == 0) { return; }
-	if(newcount == 1) {
+static
+void
+semfs_wakeup(struct semfs_sem *sem, unsigned newcount)
+{
+	if (sem->sems_count > 0 || newcount == 0) {
+		return;
+	}
+	if (newcount == 1) {
 		cv_signal(sem->sems_cv, sem->sems_lock);
-	} else {
+	}
+	else {
 		cv_broadcast(sem->sems_cv, sem->sems_lock);
 	}
 }
@@ -125,7 +156,10 @@ static void semfs_wakeup(struct semfs_sem *sem, unsigned newcount) {
 /*
  * stat() for semaphore vnodes
  */
-static int semfs_semstat(struct vnode *vn, struct stat *buf) {
+static
+int
+semfs_semstat(struct vnode *vn, struct stat *buf)
+{
 	struct semfs_vnode *semv = vn->vn_data;
 	struct semfs_sem *sem;
 
@@ -150,7 +184,10 @@ static int semfs_semstat(struct vnode *vn, struct stat *buf) {
  * Read. This is P(); decrease the count by the amount read.
  * Don't actually bother to transfer any data.
  */
-static int semfs_read(struct vnode *vn, struct uio *uio) {
+static
+int
+semfs_read(struct vnode *vn, struct uio *uio)
+{
 	struct semfs_vnode *semv = vn->vn_data;
 	struct semfs_sem *sem;
 	size_t consume;
@@ -158,19 +195,26 @@ static int semfs_read(struct vnode *vn, struct uio *uio) {
 	sem = semfs_getsem(semv);
 
 	lock_acquire(sem->sems_lock);
-	while(uio->uio_resid > 0) {
-		if(sem->sems_count > 0) {
+	while (uio->uio_resid > 0) {
+		if (sem->sems_count > 0) {
 			consume = uio->uio_resid;
-			if(consume > sem->sems_count) { consume = sem->sems_count; }
-			DEBUG(DB_SEMFS, "semfs: sem%u: P, count %u -> %u\n", semv->semv_semnum, sem->sems_count, sem->sems_count - consume);
+			if (consume > sem->sems_count) {
+				consume = sem->sems_count;
+			}
+			DEBUG(DB_SEMFS, "semfs: sem%u: P, count %u -> %u\n",
+			      semv->semv_semnum, sem->sems_count,
+			      sem->sems_count - consume);
 			sem->sems_count -= consume;
 			/* don't bother advancing the uio data pointers */
 			uio->uio_offset += consume;
 			uio->uio_resid -= consume;
 		}
-		if(uio->uio_resid == 0) { break; }
-		if(sem->sems_count == 0) {
-			DEBUG(DB_SEMFS, "semfs: sem%u: blocking\n", semv->semv_semnum);
+		if (uio->uio_resid == 0) {
+			break;
+		}
+		if (sem->sems_count == 0) {
+			DEBUG(DB_SEMFS, "semfs: sem%u: blocking\n",
+			      semv->semv_semnum);
 			cv_wait(sem->sems_cv, sem->sems_lock);
 		}
 	}
@@ -182,7 +226,10 @@ static int semfs_read(struct vnode *vn, struct uio *uio) {
  * Write. This is V(); increase the count by the amount written.
  * Don't actually bother to transfer any data.
  */
-static int semfs_write(struct vnode *vn, struct uio *uio) {
+static
+int
+semfs_write(struct vnode *vn, struct uio *uio)
+{
 	struct semfs_vnode *semv = vn->vn_data;
 	struct semfs_sem *sem;
 	unsigned newcount;
@@ -190,14 +237,15 @@ static int semfs_write(struct vnode *vn, struct uio *uio) {
 	sem = semfs_getsem(semv);
 
 	lock_acquire(sem->sems_lock);
-	while(uio->uio_resid > 0) {
+	while (uio->uio_resid > 0) {
 		newcount = sem->sems_count + uio->uio_resid;
-		if(newcount < sem->sems_count) {
+		if (newcount < sem->sems_count) {
 			/* overflow */
 			lock_release(sem->sems_lock);
 			return EFBIG;
 		}
-		DEBUG(DB_SEMFS, "semfs: sem%u: V, count %u -> %u\n", semv->semv_semnum, sem->sems_count, newcount);
+		DEBUG(DB_SEMFS, "semfs: sem%u: V, count %u -> %u\n",
+		      semv->semv_semnum, sem->sems_count, newcount);
 		semfs_wakeup(sem, newcount);
 		sem->sems_count = newcount;
 		uio->uio_offset += uio->uio_resid;
@@ -214,16 +262,23 @@ static int semfs_write(struct vnode *vn, struct uio *uio) {
  * semaphore as one would expect. Also it allows creating semaphores
  * and then initializing their counts to values other than zero.
  */
-static int semfs_truncate(struct vnode *vn, off_t len) {
+static
+int
+semfs_truncate(struct vnode *vn, off_t len)
+{
 	/* We should just use UINT_MAX but we don't have it in the kernel */
-	const unsigned max = (unsigned) -1;
+	const unsigned max = (unsigned)-1;
 
 	struct semfs_vnode *semv = vn->vn_data;
 	struct semfs_sem *sem;
 	unsigned newcount;
 
-	if(len < 0) { return EINVAL; }
-	if(len > (off_t) max) { return EFBIG; }
+	if (len < 0) {
+		return EINVAL;
+	}
+	if (len > (off_t)max) {
+		return EFBIG;
+	}
 	newcount = len;
 
 	sem = semfs_getsem(semv);
@@ -243,7 +298,10 @@ static int semfs_truncate(struct vnode *vn, off_t len) {
  * Directory read. Note that there's only one directory (the semfs
  * root) that has all the semaphores in it.
  */
-static int semfs_getdirentry(struct vnode *dirvn, struct uio *uio) {
+static
+int
+semfs_getdirentry(struct vnode *dirvn, struct uio *uio)
+{
 	struct semfs_vnode *dirsemv = dirvn->vn_data;
 	struct semfs *semfs = dirsemv->semv_semfs;
 	struct semfs_direntry *dent;
@@ -256,12 +314,14 @@ static int semfs_getdirentry(struct vnode *dirvn, struct uio *uio) {
 	lock_acquire(semfs->semfs_dirlock);
 
 	num = semfs_direntryarray_num(semfs->semfs_dents);
-	if(pos >= num) {
+	if (pos >= num) {
 		/* EOF */
 		result = 0;
-	} else {
+	}
+	else {
 		dent = semfs_direntryarray_get(semfs->semfs_dents, pos);
-		result = uiomove(dent->semd_name, strlen(dent->semd_name), uio);
+		result = uiomove(dent->semd_name, strlen(dent->semd_name),
+				 uio);
 	}
 
 	lock_release(semfs->semfs_dirlock);
@@ -271,7 +331,10 @@ static int semfs_getdirentry(struct vnode *dirvn, struct uio *uio) {
 /*
  * stat() for dirs
  */
-static int semfs_dirstat(struct vnode *vn, struct stat *buf) {
+static
+int
+semfs_dirstat(struct vnode *vn, struct stat *buf)
+{
 	struct semfs_vnode *semv = vn->vn_data;
 	struct semfs *semfs = semv->semv_semfs;
 
@@ -294,16 +357,23 @@ static int semfs_dirstat(struct vnode *vn, struct stat *buf) {
  * Backend for getcwd. Since we don't support subdirs, it's easy; send
  * back the empty string.
  */
-static int semfs_namefile(struct vnode *vn, struct uio *uio) {
-	(void) vn;
-	(void) uio;
+static
+int
+semfs_namefile(struct vnode *vn, struct uio *uio)
+{
+	(void)vn;
+	(void)uio;
 	return 0;
 }
 
 /*
  * Create a semaphore.
  */
-static int semfs_creat(struct vnode *dirvn, const char *name, bool excl, mode_t mode, struct vnode **resultvn) {
+static
+int
+semfs_creat(struct vnode *dirvn, const char *name, bool excl, mode_t mode,
+	    struct vnode **resultvn)
+{
 	struct semfs_vnode *dirsemv = dirvn->vn_data;
 	struct semfs *semfs = dirsemv->semv_semfs;
 	struct semfs_direntry *dent;
@@ -311,25 +381,30 @@ static int semfs_creat(struct vnode *dirvn, const char *name, bool excl, mode_t 
 	unsigned i, num, empty, semnum;
 	int result;
 
-	(void) mode;
-	if(!strcmp(name, ".") || !strcmp(name, "..")) { return EEXIST; }
+	(void)mode;
+	if (!strcmp(name, ".") || !strcmp(name, "..")) {
+		return EEXIST;
+	}
 
 	lock_acquire(semfs->semfs_dirlock);
 	num = semfs_direntryarray_num(semfs->semfs_dents);
 	empty = num;
-	for(i = 0; i < num; i++) {
+	for (i=0; i<num; i++) {
 		dent = semfs_direntryarray_get(semfs->semfs_dents, i);
-		if(dent == NULL) {
-			if(empty == num) { empty = i; }
+		if (dent == NULL) {
+			if (empty == num) {
+				empty = i;
+			}
 			continue;
 		}
-		if(!strcmp(dent->semd_name, name)) {
+		if (!strcmp(dent->semd_name, name)) {
 			/* found */
-			if(excl) {
+			if (excl) {
 				lock_release(semfs->semfs_dirlock);
 				return EEXIST;
 			}
-			result = semfs_getvnode(semfs, dent->semd_semnum, resultvn);
+			result = semfs_getvnode(semfs, dent->semd_semnum,
+						resultvn);
 			lock_release(semfs->semfs_dirlock);
 			return result;
 		}
@@ -337,43 +412,53 @@ static int semfs_creat(struct vnode *dirvn, const char *name, bool excl, mode_t 
 
 	/* create it */
 	sem = semfs_sem_create(name);
-	if(sem == NULL) {
+	if (sem == NULL) {
 		result = ENOMEM;
 		goto fail_unlock;
 	}
 	lock_acquire(semfs->semfs_tablelock);
 	result = semfs_sem_insert(semfs, sem, &semnum);
 	lock_release(semfs->semfs_tablelock);
-	if(result) { goto fail_uncreate; }
+	if (result) {
+		goto fail_uncreate;
+	}
 
 	dent = semfs_direntry_create(name, semnum);
-	if(dent == NULL) { goto fail_uninsert; }
+	if (dent == NULL) {
+		goto fail_uninsert;
+	}
 
-	if(empty < num) {
+	if (empty < num) {
 		semfs_direntryarray_set(semfs->semfs_dents, empty, dent);
-	} else {
-		result = semfs_direntryarray_add(semfs->semfs_dents, dent, &empty);
-		if(result) { goto fail_undent; }
+	}
+	else {
+		result = semfs_direntryarray_add(semfs->semfs_dents, dent,
+						 &empty);
+		if (result) {
+			goto fail_undent;
+		}
 	}
 
 	result = semfs_getvnode(semfs, semnum, resultvn);
-	if(result) { goto fail_undir; }
+	if (result) {
+		goto fail_undir;
+	}
 
 	sem->sems_linked = true;
 	lock_release(semfs->semfs_dirlock);
 	return 0;
 
-fail_undir:
+ fail_undir:
 	semfs_direntryarray_set(semfs->semfs_dents, empty, NULL);
-fail_undent:
+ fail_undent:
 	semfs_direntry_destroy(dent);
-fail_uninsert:
+ fail_uninsert:
 	lock_acquire(semfs->semfs_tablelock);
 	semfs_semarray_set(semfs->semfs_sems, semnum, NULL);
 	lock_release(semfs->semfs_tablelock);
-fail_uncreate:
+ fail_uncreate:
 	semfs_sem_destroy(sem);
-fail_unlock:
+ fail_unlock:
 	lock_release(semfs->semfs_dirlock);
 	return result;
 }
@@ -382,7 +467,10 @@ fail_unlock:
  * Unlink a semaphore. As with other files, it may not actually
  * go away if it's currently open.
  */
-static int semfs_remove(struct vnode *dirvn, const char *name) {
+static
+int
+semfs_remove(struct vnode *dirvn, const char *name)
+{
 	struct semfs_vnode *dirsemv = dirvn->vn_data;
 	struct semfs *semfs = dirsemv->semv_semfs;
 	struct semfs_direntry *dent;
@@ -390,26 +478,32 @@ static int semfs_remove(struct vnode *dirvn, const char *name) {
 	unsigned i, num;
 	int result;
 
-	if(!strcmp(name, ".") || !strcmp(name, "..")) { return EINVAL; }
+	if (!strcmp(name, ".") || !strcmp(name, "..")) {
+		return EINVAL;
+	}
 
 	lock_acquire(semfs->semfs_dirlock);
 	num = semfs_direntryarray_num(semfs->semfs_dents);
-	for(i = 0; i < num; i++) {
+	for (i=0; i<num; i++) {
 		dent = semfs_direntryarray_get(semfs->semfs_dents, i);
-		if(dent == NULL) { continue; }
-		if(!strcmp(name, dent->semd_name)) {
+		if (dent == NULL) {
+			continue;
+		}
+		if (!strcmp(name, dent->semd_name)) {
 			/* found */
 			sem = semfs_getsembynum(semfs, dent->semd_semnum);
 			lock_acquire(sem->sems_lock);
 			KASSERT(sem->sems_linked);
 			sem->sems_linked = false;
-			if(sem->sems_hasvnode == false) {
+			if (sem->sems_hasvnode == false) {
 				lock_acquire(semfs->semfs_tablelock);
-				semfs_semarray_set(semfs->semfs_sems, dent->semd_semnum, NULL);
+				semfs_semarray_set(semfs->semfs_sems,
+						   dent->semd_semnum, NULL);
 				lock_release(semfs->semfs_tablelock);
 				lock_release(sem->sems_lock);
 				semfs_sem_destroy(sem);
-			} else {
+			}
+			else {
 				lock_release(sem->sems_lock);
 			}
 			semfs_direntryarray_set(semfs->semfs_dents, i, NULL);
@@ -419,7 +513,7 @@ static int semfs_remove(struct vnode *dirvn, const char *name) {
 		}
 	}
 	result = ENOENT;
-out:
+ out:
 	lock_release(semfs->semfs_dirlock);
 	return result;
 }
@@ -427,14 +521,17 @@ out:
 /*
  * Lookup: get a semaphore by name.
  */
-static int semfs_lookup(struct vnode *dirvn, char *path, struct vnode **resultvn) {
+static
+int
+semfs_lookup(struct vnode *dirvn, char *path, struct vnode **resultvn)
+{
 	struct semfs_vnode *dirsemv = dirvn->vn_data;
 	struct semfs *semfs = dirsemv->semv_semfs;
 	struct semfs_direntry *dent;
 	unsigned i, num;
 	int result;
 
-	if(!strcmp(path, ".") || !strcmp(path, "..")) {
+	if (!strcmp(path, ".") || !strcmp(path, "..")) {
 		VOP_INCREF(dirvn);
 		*resultvn = dirvn;
 		return 0;
@@ -442,11 +539,14 @@ static int semfs_lookup(struct vnode *dirvn, char *path, struct vnode **resultvn
 
 	lock_acquire(semfs->semfs_dirlock);
 	num = semfs_direntryarray_num(semfs->semfs_dents);
-	for(i = 0; i < num; i++) {
+	for (i=0; i<num; i++) {
 		dent = semfs_direntryarray_get(semfs->semfs_dents, i);
-		if(dent == NULL) { continue; }
-		if(!strcmp(path, dent->semd_name)) {
-			result = semfs_getvnode(semfs, dent->semd_semnum, resultvn);
+		if (dent == NULL) {
+			continue;
+		}
+		if (!strcmp(path, dent->semd_name)) {
+			result = semfs_getvnode(semfs, dent->semd_semnum,
+						resultvn);
 			lock_release(semfs->semfs_dirlock);
 			return result;
 		}
@@ -459,12 +559,18 @@ static int semfs_lookup(struct vnode *dirvn, char *path, struct vnode **resultvn
  * Lookparent: because we don't have subdirs, just return the root
  * dir and copy the name.
  */
-static int semfs_lookparent(struct vnode *dirvn, char *path, struct vnode **resultdirvn, char *namebuf, size_t bufmax) {
-	if(strlen(path) + 1 > bufmax) { return ENAMETOOLONG; }
-	strcpy(namebuf, path);
+static
+int
+semfs_lookparent(struct vnode *dirvn, char *path,
+		 struct vnode **resultdirvn, char *namebuf, size_t bufmax)
+{
+        if (strlen(path)+1 > bufmax) {
+                return ENAMETOOLONG;
+        }
+        strcpy(namebuf, path);
 
-	VOP_INCREF(dirvn);
-	*resultdirvn = dirvn;
+        VOP_INCREF(dirvn);
+        *resultdirvn = dirvn;
 	return 0;
 }
 
@@ -474,7 +580,10 @@ static int semfs_lookparent(struct vnode *dirvn, char *path, struct vnode **resu
 /*
  * Destructor for semfs_vnode.
  */
-static void semfs_vnode_destroy(struct semfs_vnode *semv) {
+static
+void
+semfs_vnode_destroy(struct semfs_vnode *semv)
+{
 	vnode_cleanup(&semv->semv_absvn);
 	kfree(semv);
 }
@@ -482,7 +591,10 @@ static void semfs_vnode_destroy(struct semfs_vnode *semv) {
 /*
  * Reclaim - drop a vnode that's no longer in use.
  */
-static int semfs_reclaim(struct vnode *vn) {
+static
+int
+semfs_reclaim(struct vnode *vn)
+{
 	struct semfs_vnode *semv = vn->vn_data;
 	struct semfs *semfs = semv->semv_semfs;
 	struct vnode *vn2;
@@ -493,7 +605,7 @@ static int semfs_reclaim(struct vnode *vn) {
 
 	/* vnode refcount is protected by the vnode's ->vn_countlock */
 	spinlock_acquire(&vn->vn_countlock);
-	if(vn->vn_refcount > 1) {
+	if (vn->vn_refcount > 1) {
 		/* consume the reference VOP_DECREF passed us */
 		vn->vn_refcount--;
 
@@ -506,20 +618,21 @@ static int semfs_reclaim(struct vnode *vn) {
 
 	/* remove from the table */
 	num = vnodearray_num(semfs->semfs_vnodes);
-	for(i = 0; i < num; i++) {
+	for (i=0; i<num; i++) {
 		vn2 = vnodearray_get(semfs->semfs_vnodes, i);
-		if(vn2 == vn) {
+		if (vn2 == vn) {
 			vnodearray_remove(semfs->semfs_vnodes, i);
 			break;
 		}
 	}
 
-	if(semv->semv_semnum != SEMFS_ROOTDIR) {
+	if (semv->semv_semnum != SEMFS_ROOTDIR) {
 		sem = semfs_semarray_get(semfs->semfs_sems, semv->semv_semnum);
 		KASSERT(sem->sems_hasvnode);
 		sem->sems_hasvnode = false;
-		if(sem->sems_linked == false) {
-			semfs_semarray_set(semfs->semfs_sems, semv->semv_semnum, NULL);
+		if (sem->sems_linked == false) {
+			semfs_semarray_set(semfs->semfs_sems,
+					   semv->semv_semnum, NULL);
 			semfs_sem_destroy(sem);
 		}
 	}
@@ -601,24 +714,31 @@ static const struct vnode_ops semfs_semops = {
 /*
  * Constructor for semfs vnodes.
  */
-static struct semfs_vnode *semfs_vnode_create(struct semfs *semfs, unsigned semnum) {
+static
+struct semfs_vnode *
+semfs_vnode_create(struct semfs *semfs, unsigned semnum)
+{
 	const struct vnode_ops *optable;
 	struct semfs_vnode *semv;
 	int result;
 
-	if(semnum == SEMFS_ROOTDIR) {
+	if (semnum == SEMFS_ROOTDIR) {
 		optable = &semfs_dirops;
-	} else {
+	}
+	else {
 		optable = &semfs_semops;
 	}
 
 	semv = kmalloc(sizeof(*semv));
-	if(semv == NULL) { return NULL; }
+	if (semv == NULL) {
+		return NULL;
+	}
 
 	semv->semv_semfs = semfs;
 	semv->semv_semnum = semnum;
 
-	result = vnode_init(&semv->semv_absvn, optable, &semfs->semfs_absfs, semv);
+	result = vnode_init(&semv->semv_absvn, optable,
+			    &semfs->semfs_absfs, semv);
 	/* vnode_init doesn't actually fail */
 	KASSERT(result == 0);
 
@@ -629,7 +749,9 @@ static struct semfs_vnode *semfs_vnode_create(struct semfs *semfs, unsigned semn
  * Look up the vnode for a semaphore by number; if it doesn't exist,
  * create it.
  */
-int semfs_getvnode(struct semfs *semfs, unsigned semnum, struct vnode **ret) {
+int
+semfs_getvnode(struct semfs *semfs, unsigned semnum, struct vnode **ret)
+{
 	struct vnode *vn;
 	struct semfs_vnode *semv;
 	struct semfs_sem *sem;
@@ -641,10 +763,10 @@ int semfs_getvnode(struct semfs *semfs, unsigned semnum, struct vnode **ret) {
 
 	/* Look for it */
 	num = vnodearray_num(semfs->semfs_vnodes);
-	for(i = 0; i < num; i++) {
+	for (i=0; i<num; i++) {
 		vn = vnodearray_get(semfs->semfs_vnodes, i);
 		semv = vn->vn_data;
-		if(semv->semv_semnum == semnum) {
+		if (semv->semv_semnum == semnum) {
 			VOP_INCREF(vn);
 			lock_release(semfs->semfs_tablelock);
 			*ret = vn;
@@ -654,17 +776,17 @@ int semfs_getvnode(struct semfs *semfs, unsigned semnum, struct vnode **ret) {
 
 	/* Make it */
 	semv = semfs_vnode_create(semfs, semnum);
-	if(semv == NULL) {
+	if (semv == NULL) {
 		lock_release(semfs->semfs_tablelock);
 		return ENOMEM;
 	}
 	result = vnodearray_add(semfs->semfs_vnodes, &semv->semv_absvn, NULL);
-	if(result) {
+	if (result) {
 		semfs_vnode_destroy(semv);
 		lock_release(semfs->semfs_tablelock);
 		return ENOMEM;
 	}
-	if(semnum != SEMFS_ROOTDIR) {
+	if (semnum != SEMFS_ROOTDIR) {
 		sem = semfs_semarray_get(semfs->semfs_sems, semnum);
 		KASSERT(sem != NULL);
 		KASSERT(sem->sems_hasvnode == false);

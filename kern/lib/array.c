@@ -29,30 +29,40 @@
 
 #define ARRAYINLINE
 
-#include <array.h>
+#include <types.h>
 #include <kern/errno.h>
 #include <lib.h>
-#include <types.h>
+#include <array.h>
 
-struct array *array_create(void) {
+struct array *
+array_create(void)
+{
 	struct array *a;
 
 	a = kmalloc(sizeof(*a));
-	if(a != NULL) { array_init(a); }
+	if (a != NULL) {
+		array_init(a);
+	}
 	return a;
 }
 
-void array_destroy(struct array *a) {
+void
+array_destroy(struct array *a)
+{
 	array_cleanup(a);
 	kfree(a);
 }
 
-void array_init(struct array *a) {
+void
+array_init(struct array *a)
+{
 	a->num = a->max = 0;
 	a->v = NULL;
 }
 
-void array_cleanup(struct array *a) {
+void
+array_cleanup(struct array *a)
+{
 	/*
 	 * Require array to be empty - helps avoid memory leaks since
 	 * we don't/can't free anything any contents may be pointing
@@ -65,14 +75,18 @@ void array_cleanup(struct array *a) {
 #endif
 }
 
-int array_preallocate(struct array *a, unsigned num) {
+int
+array_preallocate(struct array *a, unsigned num)
+{
 	void **newptr;
 	unsigned newmax;
 
-	if(num > a->max) {
+	if (num > a->max) {
 		/* Don't touch A until the allocation succeeds. */
 		newmax = a->max;
-		while(num > newmax) { newmax = newmax ? newmax * 2 : 4; }
+		while (num > newmax) {
+			newmax = newmax ? newmax*2 : 4;
+		}
 
 		/*
 		 * We don't have krealloc, and it wouldn't be
@@ -81,9 +95,11 @@ int array_preallocate(struct array *a, unsigned num) {
 		 * about this and/or kmalloc makes it not worthwhile?)
 		 */
 
-		newptr = kmalloc(newmax * sizeof(*a->v));
-		if(newptr == NULL) { return ENOMEM; }
-		memcpy(newptr, a->v, a->num * sizeof(*a->v));
+		newptr = kmalloc(newmax*sizeof(*a->v));
+		if (newptr == NULL) {
+			return ENOMEM;
+		}
+		memcpy(newptr, a->v, a->num*sizeof(*a->v));
 		kfree(a->v);
 		a->v = newptr;
 		a->max = newmax;
@@ -91,23 +107,29 @@ int array_preallocate(struct array *a, unsigned num) {
 	return 0;
 }
 
-int array_setsize(struct array *a, unsigned num) {
+int
+array_setsize(struct array *a, unsigned num)
+{
 	int result;
 
 	result = array_preallocate(a, num);
-	if(result) { return result; }
+	if (result) {
+		return result;
+	}
 	a->num = num;
 
 	return 0;
 }
 
-void array_remove(struct array *a, unsigned index) {
-	unsigned num_to_move;
+void
+array_remove(struct array *a, unsigned index)
+{
+        unsigned num_to_move;
 
-	ARRAYASSERT(a->num <= a->max);
-	ARRAYASSERT(index < a->num);
+        ARRAYASSERT(a->num <= a->max);
+        ARRAYASSERT(index < a->num);
 
-	num_to_move = a->num - (index + 1);
-	memmove(a->v + index, a->v + index + 1, num_to_move * sizeof(void *));
-	a->num--;
+        num_to_move = a->num - (index + 1);
+        memmove(a->v + index, a->v + index+1, num_to_move*sizeof(void *));
+        a->num--;
 }

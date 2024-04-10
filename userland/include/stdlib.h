@@ -31,8 +31,8 @@
 #define _STDLIB_H_
 
 #include <kern/types.h>
-#include <sys/null.h>
 #include <types/size_t.h>
+#include <sys/null.h>
 
 /*
  * Ascii to integer - turn a string holding a number into a number.
@@ -64,7 +64,7 @@ int system(const char *command);
 /*
  * Pseudo-random number generator.
  */
-#define RAND_MAX 0x7fffffff
+#define RAND_MAX  0x7fffffff
 long random(void);
 void srandom(unsigned long seed);
 char *initstate(unsigned long, char *, size_t);
@@ -79,6 +79,7 @@ void free(void *ptr);
 /*
  * Sort.
  */
-void qsort(void *data, unsigned num, size_t size, int (*f)(const void *, const void *));
+void qsort(void *data, unsigned num, size_t size,
+	   int (*f)(const void *, const void *));
 
 #endif /* _STDLIB_H_ */

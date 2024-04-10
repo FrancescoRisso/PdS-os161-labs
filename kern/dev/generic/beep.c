@@ -27,11 +27,10 @@
  * SUCH DAMAGE.
  */
 
-#include <generic/beep.h>
+#include <types.h>
 #include <kern/errno.h>
 #include <lib.h>
-#include <types.h>
-
+#include <generic/beep.h>
 #include "autoconf.h"
 
 /*
@@ -47,19 +46,26 @@
 
 static struct beep_softc *the_beep = NULL;
 
-int config_beep(struct beep_softc *bs, int unit) {
+int
+config_beep(struct beep_softc *bs, int unit)
+{
 	/* We use only the first beep device. */
-	if(unit != 0) { return ENODEV; }
+	if (unit!=0) {
+		return ENODEV;
+	}
 
-	KASSERT(the_beep == NULL);
+	KASSERT(the_beep==NULL);
 	the_beep = bs;
 	return 0;
 }
 
-void beep(void) {
-	if(the_beep != NULL) {
+void
+beep(void)
+{
+	if (the_beep!=NULL) {
 		the_beep->bs_beep(the_beep->bs_devdata);
-	} else {
+	}
+	else {
 		kprintf("beep: Warning: no beep device\n");
 	}
 }

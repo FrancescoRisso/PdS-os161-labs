@@ -45,13 +45,13 @@
  *    getpid open read write lseek close remove _exit
  */
 
-#include <assert.h>
-#include <err.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <errno.h>
+#include <err.h>
 
 struct indexentry {
 	off_t pos;
@@ -67,14 +67,17 @@ static char buf[4096];
 // string ops
 
 /* this is standard and should go into libc */
-static void *memchr(const void *buf, int ch, size_t buflen) {
+static
+void *
+memchr(const void *buf, int ch, size_t buflen)
+{
 	const unsigned char *ubuf = buf;
 	size_t i;
 
-	for(i = 0; i < buflen; i++) {
-		if(ubuf[i] == ch) {
+	for (i=0; i<buflen; i++) {
+		if (ubuf[i] == ch) {
 			/* this must launder const */
-			return (void *) (ubuf + i);
+			return (void *)(ubuf + i);
 		}
 	}
 	return NULL;
@@ -83,61 +86,84 @@ static void *memchr(const void *buf, int ch, size_t buflen) {
 ////////////////////////////////////////////////////////////
 // syscall wrappers
 
-static size_t doread(int fd, const char *name, void *buf, size_t len) {
+static
+size_t
+doread(int fd, const char *name, void *buf, size_t len)
+{
 	ssize_t r;
 
 	r = read(fd, buf, len);
-	if(r == -1) { err(1, "%s: read", name); }
-	return (size_t) r;
+	if (r == -1) {
+		err(1, "%s: read", name);
+	}
+	return (size_t)r;
 }
 
-static void dowrite(int fd, const char *name, const void *buf, size_t len) {
+static
+void
+dowrite(int fd, const char *name, const void *buf, size_t len)
+{
 	ssize_t r;
 
 	r = write(fd, buf, len);
-	if(r == -1) {
+	if (r == -1) {
 		err(1, "%s: write", name);
-	} else if((size_t) r != len) {
-		errx(1, "%s: write: Unexpected short count %zd of %zu", r, len);
+	}
+	else if ((size_t)r != len) {
+		errx(1, "%s: write: Unexpected short count %zd of %zu",
+		     r, len);
 	}
 }
 
-static off_t dolseek(int fd, const char *name, off_t pos, int whence) {
+static
+off_t
+dolseek(int fd, const char *name, off_t pos, int whence)
+{
 	off_t ret;
 
 	ret = lseek(fd, pos, whence);
-	if(ret == -1) { err(1, "%s: lseek", name); }
+	if (ret == -1) {
+		err(1, "%s: lseek", name);
+	}
 	return ret;
 }
 
 ////////////////////////////////////////////////////////////
 // file I/O
 
-static void readfile(const char *name) {
+static
+void
+readfile(const char *name)
+{
 	int fd, closefd;
 	struct indexentry x;
 	size_t len, remaining, here;
 	const char *s, *t;
-
-	if(name == NULL || !strcmp(name, "-")) {
+	
+	if (name == NULL || !strcmp(name, "-")) {
 		fd = STDIN_FILENO;
 		closefd = -1;
-	} else {
+	}
+	else {
 		fd = open(name, O_RDONLY);
-		if(fd < 0) { err(1, "%s", name); }
+		if (fd < 0) {
+			err(1, "%s", name);
+		}
 		closefd = fd;
 	}
 
 	x.pos = 0;
 	x.len = 0;
-	while(1) {
+	while (1) {
 		len = doread(fd, name, buf, sizeof(buf));
-		if(len == 0) { break; }
+		if (len == 0) {
+			break;
+		}
 
 		remaining = len;
-		for(s = buf; s != NULL; s = t) {
+		for (s = buf; s != NULL; s = t) {
 			t = memchr(s, '\n', remaining);
-			if(t != NULL) {
+			if (t != NULL) {
 				t++;
 				here = (t - s);
 				x.len += here;
@@ -145,18 +171,26 @@ static void readfile(const char *name) {
 				dowrite(indexfd, indexname, &x, sizeof(x));
 				x.pos += x.len;
 				x.len = 0;
-			} else {
+			}
+			else {
 				x.len += remaining;
 			}
 		}
 		dowrite(datafd, dataname, buf, len);
 	}
-	if(x.len > 0) { dowrite(indexfd, indexname, &x, sizeof(x)); }
+	if (x.len > 0) {
+		dowrite(indexfd, indexname, &x, sizeof(x));
+	}
 
-	if(closefd != -1) { close(closefd); }
+	if (closefd != -1) {
+		close(closefd);
+	}
 }
 
-static void dumpdata(void) {
+static
+void
+dumpdata(void)
+{
 	struct indexentry x;
 	off_t indexsize, pos, done;
 	size_t amount, len;
@@ -164,24 +198,26 @@ static void dumpdata(void) {
 	indexsize = dolseek(indexfd, indexname, 0, SEEK_CUR);
 	pos = indexsize;
 	assert(pos % sizeof(x) == 0);
-	while(pos > 0) {
+	while (pos > 0) {
 		pos -= sizeof(x);
 		assert(pos >= 0);
 		dolseek(indexfd, indexname, pos, SEEK_SET);
 
 		len = doread(indexfd, indexname, &x, sizeof(x));
-		if(len != sizeof(x)) { errx(1, "%s: read: Unexpected EOF", indexname); }
+		if (len != sizeof(x)) {
+			errx(1, "%s: read: Unexpected EOF", indexname);
+		}
 		dolseek(datafd, dataname, x.pos, SEEK_SET);
 
-		for(done = 0; done < x.len; done += amount) {
+		for (done = 0; done < x.len; done += amount) {
 			amount = sizeof(buf);
-			if((off_t) amount > x.len - done) { amount = x.len - done; }
+			if ((off_t)amount > x.len - done) {
+				amount = x.len - done;
+			}
 			len = doread(datafd, dataname, buf, amount);
-			if(len != amount) {
-				errx(1,
-					"%s: read: Unexpected short count"
-					" %zu of %zu",
-					dataname, len, amount);
+			if (len != amount) {
+				errx(1, "%s: read: Unexpected short count"
+				     " %zu of %zu", dataname, len, amount);
 			}
 			dowrite(STDOUT_FILENO, "stdout", buf, len);
 		}
@@ -191,43 +227,61 @@ static void dumpdata(void) {
 ////////////////////////////////////////////////////////////
 // main
 
-static int openscratch(const char *name, int flags, mode_t mode) {
+static
+int
+openscratch(const char *name, int flags, mode_t mode)
+{
 	int fd;
 
 	fd = open(name, flags, mode);
-	if(fd < 0) { err(1, "%s", name); }
-	if(remove(name) < 0) {
-		if(errno != ENOSYS) { err(1, "%s: remove", name); }
+	if (fd < 0) {
+		err(1, "%s", name);
+	}
+	if (remove(name) < 0) {
+		if (errno != ENOSYS) {
+			err(1, "%s: remove", name);
+		}
 	}
 	return fd;
 }
 
-static void openfiles(void) {
+static
+void
+openfiles(void)
+{
 	pid_t pid;
 
 	pid = getpid();
 
-	snprintf(dataname, sizeof(dataname), ".tmp.tacdata.%d", (int) pid);
-	datafd = openscratch(dataname, O_RDWR | O_CREAT | O_TRUNC, 0664);
+	snprintf(dataname, sizeof(dataname), ".tmp.tacdata.%d", (int)pid);
+	datafd = openscratch(dataname, O_RDWR|O_CREAT|O_TRUNC, 0664);
 
-	snprintf(indexname, sizeof(indexname), ".tmp.tacindex.%d", (int) pid);
-	indexfd = openscratch(indexname, O_RDWR | O_CREAT | O_TRUNC, 0664);
+	snprintf(indexname, sizeof(indexname), ".tmp.tacindex.%d", (int)pid);
+	indexfd = openscratch(indexname, O_RDWR|O_CREAT|O_TRUNC, 0664);
 }
 
-static void closefiles(void) {
+static
+void
+closefiles(void)
+{
 	close(datafd);
 	close(indexfd);
 	indexfd = datafd = -1;
 }
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[])
+{
 	int i;
 
 	openfiles();
 
-	if(argc > 1) {
-		for(i = 1; i < argc; i++) { readfile(argv[i]); }
-	} else {
+	if (argc > 1) {
+		for (i=1; i<argc; i++) {
+			readfile(argv[i]);
+		}
+	}
+	else {
 		readfile(NULL);
 	}
 
