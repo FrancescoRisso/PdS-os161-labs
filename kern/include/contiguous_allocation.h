@@ -9,5 +9,6 @@
 #include "spinlock.h"
 
 paddr_t getppages(unsigned long npages);
+void freeppages(paddr_t addr);
 
 #endif

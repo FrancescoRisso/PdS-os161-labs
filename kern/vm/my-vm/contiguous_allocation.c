@@ -3,19 +3,15 @@
 #if OPT_CONTIGUOUS_ALLOCATION
 
 static struct spinlock allocmem_lock = SPINLOCK_INITIALIZER;
-// static struct spinlock freemem_lock = SPINLOCK_INITIALIZER;
+static struct spinlock freemem_lock = SPINLOCK_INITIALIZER;
 
 #define page2addr(p) baseAddr + p *PAGE_SIZE
+#define addr2page(addr) (int) ((addr - (unsigned) baseAddr) / PAGE_SIZE)
 
 static short *pages;  // -1 if free, otherwhise index of first page in allocation block
 static int numPages = 0;
 static paddr_t baseAddr;
 static bool initialized = false;
-
-#define TEST_print_pages()                                       \
-	kprintf("[ ");                                               \
-	for(int i = 0; i < numPages; i++) kprintf("%d, ", pages[i]); \
-	kprintf("]\n")
 
 /*
 	find_allocation_spot
@@ -70,7 +66,7 @@ vaddr_t alloc_kpages(unsigned npages) {
 }
 
 void free_kpages(vaddr_t addr) {
-	addr++;  // TODO
+	freeppages(addr - MIPS_KSEG0);
 }
 
 paddr_t getppages(unsigned long npages) {
@@ -78,13 +74,11 @@ paddr_t getppages(unsigned long npages) {
 
 	spinlock_acquire(&allocmem_lock);
 
-	kprintf("\t%ld pages requested\n", npages);
-
 	if(!initialized)
 		addr = ram_stealmem(npages);
 	else {
 		int page = find_allocation_spot(npages);
-		
+
 		if(page == -1) addr = 0;
 
 		for(unsigned i = 0; i < npages; i++) pages[page + i] = page;
@@ -94,6 +88,15 @@ paddr_t getppages(unsigned long npages) {
 	spinlock_release(&allocmem_lock);
 
 	return addr;
+}
+
+void freeppages(paddr_t addr) {
+	spinlock_acquire(&freemem_lock);
+
+	int page = addr2page(addr);
+	for(int i = page; i < numPages && pages[i] == page; i++) pages[i] = -1;
+
+	spinlock_release(&freemem_lock);
 }
 
 #endif

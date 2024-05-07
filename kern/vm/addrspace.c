@@ -140,6 +140,8 @@ int as_complete_load(struct addrspace *as) {
 	 * Write this.
 	 */
 
+	// maybe here shoudl call freeppages
+
 	(void) as;
 	return 0;
 }
