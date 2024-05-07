@@ -461,3 +461,6 @@ optfile		syscall_read	/syscall/read.c
 
 defoption	syscall_exit
 optfile		syscall_exit	/syscall/exit.c
+
+defoption	contiguous_allocation
+optfile		contiguous_allocation /vm/my-vm/contiguous_allocation.c
