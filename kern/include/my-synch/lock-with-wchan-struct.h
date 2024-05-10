@@ -1,7 +1,9 @@
 #ifndef _LOCK_WITH_WCHAN_STRUCT
 #define _LOCK_WITH_WCHAN_STRUCT
 
+#include <current.h>
 #include <spinlock.h>
+#include <wchan.h>
 
 #include "opt-lock_with_wchans.h"
 
@@ -9,9 +11,10 @@
 
 struct lock {
 	char *lk_name;
+	struct wchan *wc;
+	struct thread *owner;
+	struct spinlock internal_lock;
 	HANGMAN_LOCKABLE(lk_hangman); /* Deadlock detector hook. */
-								  // add what you need here
-								  // (don't forget to mark things volatile as needed)
 };
 
 #endif
