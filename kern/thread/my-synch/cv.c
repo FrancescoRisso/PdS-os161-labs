@@ -1,6 +1,6 @@
 #include "opt-cond_var.h"
 
-#if !OPT_COND_VAR
+#if OPT_COND_VAR
 
 #include <__includeTypes.h>
 #include <lib.h>

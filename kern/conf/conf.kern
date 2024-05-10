@@ -472,3 +472,6 @@ optfile		lock_with_sems	/thread/my-synch/lock-with-semaphores.c
 
 defoption	lock_with_wchans
 optfile		lock_with_wchans	/thread/my-synch/lock-with-wchan.c
+
+defoption	cond_var
+optfile		cond_var		/thread/my-synch/cv.c

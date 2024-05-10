@@ -110,6 +110,7 @@ bool lock_do_i_hold(struct lock *);
  */
 
 #include "my-synch/cv-default-struct.h"
+#include "my-synch/cv-struct.h"
 
 struct cv *cv_create(const char *name);
 void cv_destroy(struct cv *);

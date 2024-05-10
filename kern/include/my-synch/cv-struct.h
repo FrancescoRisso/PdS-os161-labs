@@ -1,9 +1,9 @@
-#ifndef _CV_DEFAULT_STRUCT
-#define _CV_DEFAULT_STRUCT
+#ifndef _CV_STRUCT
+#define _CV_STRUCT
 
 #include "opt-cond_var.h"
 
-#if !OPT_COND_VAR
+#if OPT_COND_VAR
 
 struct cv {
 	char *cv_name;
