@@ -37,3 +37,5 @@ options contiguous_allocation
 options syscall_write
 options syscall_read
 options syscall_exit
+
+options lock_with_sems
