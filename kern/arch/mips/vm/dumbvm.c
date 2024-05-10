@@ -39,6 +39,8 @@
 #include <spl.h>
 #include <vm.h>
 
+#include "contiguous_allocation.h"
+
 /*
  * Dumb MIPS-only "VM system" that is intended to only be just barely
  * enough to struggle off the ground. You should replace all of this
@@ -62,11 +64,15 @@
 /*
  * Wrap ram_stealmem in a spinlock.
  */
+#if !OPT_CONTIGUOUS_ALLOCATION
 static struct spinlock stealmem_lock = SPINLOCK_INITIALIZER;
+#endif
 
+#if !OPT_CONTIGUOUS_ALLOCATION
 void vm_bootstrap(void) {
 	/* Do nothing. */
 }
+#endif
 
 /*
  * Check if we're in a context that can sleep. While most of the
@@ -85,6 +91,7 @@ static void dumbvm_can_sleep(void) {
 	}
 }
 
+#if !OPT_CONTIGUOUS_ALLOCATION
 static paddr_t getppages(unsigned long npages) {
 	paddr_t addr;
 
@@ -95,7 +102,9 @@ static paddr_t getppages(unsigned long npages) {
 	spinlock_release(&stealmem_lock);
 	return addr;
 }
+#endif
 
+#if !OPT_CONTIGUOUS_ALLOCATION
 /* Allocate/free some kernel-space virtual pages */
 vaddr_t alloc_kpages(unsigned npages) {
 	paddr_t pa;
@@ -105,12 +114,15 @@ vaddr_t alloc_kpages(unsigned npages) {
 	if(pa == 0) { return 0; }
 	return PADDR_TO_KVADDR(pa);
 }
+#endif
 
+#if !OPT_CONTIGUOUS_ALLOCATION
 void free_kpages(vaddr_t addr) {
 	/* nothing - leak the memory. */
 
 	(void) addr;
 }
+#endif
 
 void vm_tlbshootdown(const struct tlbshootdown *ts) {
 	(void) ts;
