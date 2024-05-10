@@ -1,3 +1,6 @@
+#ifndef _LOCK_WITH_SEM_STRUCT
+#define _LOCK_WITH_SEM_STRUCT
+
 #include <spinlock.h>
 
 #include "opt-lock_with_sems.h"
@@ -11,4 +14,5 @@ struct lock {
 								  // (don't forget to mark things volatile as needed)
 };
 
+#endif
 #endif
