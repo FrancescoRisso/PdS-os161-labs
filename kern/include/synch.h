@@ -74,6 +74,7 @@ void V(struct semaphore *);
  */
 #include "my-synch/lock-default-struct.h"
 #include "my-synch/lock-with-semaphores-struct.h"
+#include "my-synch/lock-with-wchan-struct.h"
 
 struct lock *lock_create(const char *name);
 void lock_destroy(struct lock *);

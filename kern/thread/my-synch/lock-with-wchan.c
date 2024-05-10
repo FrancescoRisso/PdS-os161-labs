@@ -3,11 +3,9 @@
 #include <synch.h>
 
 #include "opt-lock_with_sems.h"
-#include "opt-lock_with_wchans.h"
 
 
 #if !OPT_LOCK_WITH_SEMS
-#if !OPT_LOCK_WITH_WCHANS
 
 
 struct lock *lock_create(const char *name) {
@@ -67,5 +65,4 @@ bool lock_do_i_hold(struct lock *lock) {
 	return true;  // dummy until code gets written
 }
 
-#endif
 #endif
