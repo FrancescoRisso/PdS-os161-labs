@@ -468,3 +468,6 @@ optfile		contiguous_allocation /vm/my-vm/contiguous_allocation.c
 
 defoption	lock_with_sems
 optfile		lock_with_sems	/thread/my-synch/lock-with-semaphores.c
+
+defoption	lock_with_wchans
+optfile		lock_with_wchans	/thread/my-synch/lock-with-wchan.c

@@ -1,11 +1,13 @@
-#ifndef _LOCK_WITH_SEM_STRUCT
-#define _LOCK_WITH_SEM_STRUCT
+#ifndef _LOCK_DEFAULT_STRUCT
+#define _LOCK_DEFAULT_STRUCT
 
 #include <spinlock.h>
 
 #include "opt-lock_with_sems.h"
+#include "opt-lock_with_wchans.h"
 
 #if !OPT_LOCK_WITH_SEMS
+#if !OPT_LOCK_WITH_WCHANS
 
 struct lock {
 	char *lk_name;
@@ -14,5 +16,6 @@ struct lock {
 								  // (don't forget to mark things volatile as needed)
 };
 
+#endif
 #endif
 #endif
