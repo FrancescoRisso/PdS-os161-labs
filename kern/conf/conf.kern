@@ -324,6 +324,7 @@ file      thread/spl.c
 file      thread/spinlock.c
 file      thread/synch.c
 file      thread/my-synch/lock-default.c
+file      thread/my-synch/cv-default.c
 file      thread/thread.c
 file      thread/threadlist.c
 
