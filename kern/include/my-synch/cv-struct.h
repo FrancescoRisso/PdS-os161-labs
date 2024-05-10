@@ -5,10 +5,13 @@
 
 #if OPT_COND_VAR
 
+#include <current.h>
+#include <wchan.h>
+
 struct cv {
 	char *cv_name;
-	// add what you need here
-	// (don't forget to mark things volatile as needed)
+	struct wchan *wc;
+	struct spinlock internal_lock;
 };
 
 #endif

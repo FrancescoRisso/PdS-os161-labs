@@ -6,13 +6,6 @@
 #include <lib.h>
 #include <synch.h>
 
-/*
-#include <current.h>
-#include <spinlock.h>
-#include <thread.h>
-#include <wchan.h>
-*/
-
 struct cv *cv_create(const char *name) {
 	struct cv *cv;
 
