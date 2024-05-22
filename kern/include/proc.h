@@ -114,6 +114,8 @@ struct addrspace *proc_setas(struct addrspace *);
 int proc__wait(struct proc *);
 
 void waitpid(int pid);
+
+int getpid(void);
 #endif
 
 

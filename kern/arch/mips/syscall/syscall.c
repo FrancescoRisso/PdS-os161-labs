@@ -130,7 +130,13 @@ void syscall(struct trapframe *tf) {
 			waitpid((int) tf->tf_a0);
 			err = 0;
 			break;
+
+		case SYS_getpid:
+			getpid();
+			err = 0;
+			break;
 #endif
+
 
 		default:
 			kprintf("Unknown syscall %d\n", callno);

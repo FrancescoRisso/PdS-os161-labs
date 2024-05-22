@@ -337,4 +337,8 @@ void waitpid(int pid) {
 	pids[pid] = NULL;
 }
 
+int getpid(void) {
+	return curproc->pid;
+}
+
 #endif
