@@ -49,6 +49,8 @@
 #include <spl.h>
 #include <vnode.h>
 
+#include "opt-waitpid.h"
+
 /*
  * The process for the kernel; this holds all the kernel-only threads.
  */
@@ -61,9 +63,17 @@ static struct proc *proc_create(const char *name) {
 	struct proc *proc;
 
 	proc = kmalloc(sizeof(*proc));
-	if(proc == NULL) { return NULL; }
+	if(proc == NULL) return NULL;
+
 	proc->p_name = kstrdup(name);
 	if(proc->p_name == NULL) {
+		kfree(proc);
+		return NULL;
+	}
+
+	proc->sem = sem_create(name, 0);
+	if(proc->sem == NULL) {
+		kfree(proc->p_name);
 		kfree(proc);
 		return NULL;
 	}
@@ -97,6 +107,8 @@ void proc_destroy(struct proc *proc) {
 
 	KASSERT(proc != NULL);
 	KASSERT(proc != kproc);
+
+	sem_destroy(proc->sem);
 
 	/*
 	 * We don't take p_lock in here because we must have the only
@@ -292,3 +304,18 @@ struct addrspace *proc_setas(struct addrspace *newas) {
 	spinlock_release(&proc->p_lock);
 	return oldas;
 }
+
+#if OPT_WAITPID
+
+int proc__wait(struct proc *target) {
+	KASSERT(target != NULL);
+	KASSERT(target != kproc);
+
+	P(target->sem);  // wait
+
+	int ret_val = target->ret_val;
+	proc_destroy(target);
+	return ret_val;
+}
+
+#endif

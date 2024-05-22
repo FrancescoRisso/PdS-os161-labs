@@ -46,6 +46,7 @@
 
 #include "opt-net.h"
 #include "opt-sfs.h"
+#include "opt-waitpid.h"
 
 /*
  * In-kernel menu and command dispatcher.
@@ -120,6 +121,10 @@ static int common_prog(int nargs, char **args) {
 		proc_destroy(proc);
 		return result;
 	}
+
+#if OPT_WAITPID
+	kprintf("Process completed with return value %d\n", proc__wait(proc));
+#endif
 
 	/*
 	 * The new process will be destroyed when the program exits...
