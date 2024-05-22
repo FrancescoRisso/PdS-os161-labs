@@ -45,11 +45,16 @@
 #include <__includeTypes.h>
 #include <addrspace.h>
 #include <current.h>
+#include <limits.h>
 #include <proc.h>
 #include <spl.h>
 #include <vnode.h>
 
 #include "opt-waitpid.h"
+
+static struct proc *pids[PID_MAX] = {0};
+static int last_pid = PID_MIN;
+static struct spinlock pid_spinlock = SPINLOCK_INITIALIZER;
 
 /*
  * The process for the kernel; this holds all the kernel-only threads.
@@ -61,6 +66,8 @@ struct proc *kproc;
  */
 static struct proc *proc_create(const char *name) {
 	struct proc *proc;
+
+	KASSERT(last_pid < PID_MAX);
 
 	proc = kmalloc(sizeof(*proc));
 	if(proc == NULL) return NULL;
@@ -80,6 +87,12 @@ static struct proc *proc_create(const char *name) {
 
 	proc->p_numthreads = 0;
 	spinlock_init(&proc->p_lock);
+
+	spinlock_acquire(&pid_spinlock);
+	proc->pid = ++last_pid;
+	spinlock_release(&pid_spinlock);
+
+	pids[proc->pid] = proc;
 
 	/* VM fields */
 	proc->p_addrspace = NULL;

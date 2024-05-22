@@ -82,6 +82,7 @@ struct proc {
 	struct semaphore *sem;
 
 	int ret_val;
+	int pid;
 #endif
 };
 
