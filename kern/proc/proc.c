@@ -331,4 +331,10 @@ int proc__wait(struct proc *target) {
 	return ret_val;
 }
 
+void waitpid(int pid) {
+	KASSERT(pids[pid] != NULL);
+	proc__wait(pids[pid]);
+	pids[pid] = NULL;
+}
+
 #endif

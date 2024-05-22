@@ -112,6 +112,8 @@ struct addrspace *proc_setas(struct addrspace *);
 
 #if OPT_WAITPID
 int proc__wait(struct proc *);
+
+void waitpid(int pid);
 #endif
 
 
