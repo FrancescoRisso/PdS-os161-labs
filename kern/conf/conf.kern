@@ -324,6 +324,7 @@ file      thread/spl.c
 file      thread/spinlock.c
 file      thread/synch.c
 file      thread/my-synch/lock-default.c
+file      thread/my-synch/cv-default.c
 file      thread/thread.c
 file      thread/threadlist.c
 
@@ -471,3 +472,6 @@ optfile		lock_with_sems	/thread/my-synch/lock-with-semaphores.c
 
 defoption	lock_with_wchans
 optfile		lock_with_wchans	/thread/my-synch/lock-with-wchan.c
+
+defoption	cond_var
+optfile		cond_var		/thread/my-synch/cv.c
